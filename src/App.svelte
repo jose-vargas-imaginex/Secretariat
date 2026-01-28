@@ -1,49 +1,57 @@
 <script>
-  let name = $state('Secretariat');
+  import Layout from './lib/components/Layout.svelte';
+  import { onMount } from 'svelte';
+  import { initDatabase } from './lib/db/database.js';
+
+  let dbReady = $state(false);
+  let error = $state(null);
+
+  onMount(async () => {
+    try {
+      await initDatabase();
+      dbReady = true;
+    } catch (e) {
+      error = e.message;
+      console.error('Failed to initialize database:', e);
+    }
+  });
 </script>
 
-<main>
-  <div class="welcome">
-    <h1>Hello World!</h1>
-    <p>Welcome to <span class="highlight">{name}</span></p>
-    <p class="subtitle">Your AI-augmented notes app</p>
+{#if error}
+  <div class="error">
+    <h1>Error</h1>
+    <p>{error}</p>
   </div>
-</main>
+{:else if !dbReady}
+  <div class="loading">
+    <p>Loading...</p>
+  </div>
+{:else}
+  <Layout>
+    <div class="today-view">
+      <h1>Today</h1>
+      <p>Quick capture coming soon...</p>
+    </div>
+  </Layout>
+{/if}
 
 <style>
-  main {
-    text-align: center;
-    padding: 2rem;
-  }
-
-  .welcome {
+  .loading, .error {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
     gap: 1rem;
   }
 
-  h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .error {
+    color: #ef4444;
   }
 
-  p {
-    font-size: 1.25rem;
-    color: inherit;
-    opacity: 0.9;
-  }
-
-  .highlight {
+  .today-view h1 {
+    font-size: 1.5rem;
     font-weight: 600;
-    color: #667eea;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-    opacity: 0.7;
+    margin-bottom: 1rem;
   }
 </style>

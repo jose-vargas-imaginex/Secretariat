@@ -1,5 +1,20 @@
 <script>
-  let currentView = $state('today');
+  import Calendar from './Calendar.svelte';
+  import { getDatesWithNotes } from '../db/dailyNotes.js';
+  import { startOfMonth, endOfMonth } from 'date-fns';
+
+  let { selectedDate = $bindable(new Date()), onViewChange = () => {} } = $props();
+
+  let datesWithNotes = $derived.by(() => {
+    const start = startOfMonth(selectedDate);
+    const end = endOfMonth(selectedDate);
+    return getDatesWithNotes(start, end);
+  });
+
+  function goToToday() {
+    selectedDate = new Date();
+    onViewChange('today');
+  }
 </script>
 
 <aside class="sidebar">
@@ -10,8 +25,7 @@
   <nav class="nav">
     <button
       class="nav-item"
-      class:active={currentView === 'today'}
-      onclick={() => currentView = 'today'}
+      onclick={goToToday}
     >
       Today
     </button>
@@ -19,7 +33,7 @@
 
   <div class="sidebar-section">
     <h2>Calendar</h2>
-    <p class="placeholder">Calendar coming soon</p>
+    <Calendar bind:selectedDate {datesWithNotes} />
   </div>
 
   <div class="sidebar-section">
@@ -28,7 +42,7 @@
   </div>
 
   <div class="sidebar-footer">
-    <button class="nav-item">Settings</button>
+    <button class="nav-item" onclick={() => onViewChange('settings')}>Settings</button>
   </div>
 </aside>
 
@@ -77,13 +91,8 @@
     background: var(--bg-hover);
   }
 
-  .nav-item.active {
-    background: var(--bg-active);
-    color: var(--accent-color);
-  }
-
   .sidebar-section {
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     border-top: 1px solid var(--border-color);
   }
 

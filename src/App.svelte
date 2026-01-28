@@ -1,6 +1,7 @@
 <script>
   import Layout from './lib/components/Layout.svelte';
   import DayView from './lib/components/DayView.svelte';
+  import Settings from './lib/components/Settings.svelte';
   import { onMount } from 'svelte';
   import { initDatabase } from './lib/db/database.js';
 
@@ -34,10 +35,7 @@
     {#if currentView === 'today' || currentView === 'day'}
       <DayView date={selectedDate} />
     {:else if currentView === 'settings'}
-      <div class="settings-view">
-        <h1>Settings</h1>
-        <p>Settings coming soon...</p>
-      </div>
+      <Settings />
     {/if}
   </Layout>
 {/if}
@@ -54,16 +52,5 @@
 
   .error {
     color: #ef4444;
-  }
-
-  .settings-view {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  .settings-view h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
   }
 </style>

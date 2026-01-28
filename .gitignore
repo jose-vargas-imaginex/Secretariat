@@ -22,3 +22,6 @@ Thumbs.db
 
 # Electron build output
 release/
+
+# Git worktrees
+.worktrees/

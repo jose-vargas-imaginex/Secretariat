@@ -1,11 +1,22 @@
 <script>
   import Sidebar from './Sidebar.svelte';
 
-  let { children } = $props();
+  let {
+    selectedDate = $bindable(new Date()),
+    currentView = $bindable('today'),
+    children
+  } = $props();
+
+  function handleViewChange(view) {
+    currentView = view;
+  }
 </script>
 
 <div class="layout">
-  <Sidebar />
+  <Sidebar
+    bind:selectedDate
+    onViewChange={handleViewChange}
+  />
   <main class="main-content">
     {@render children()}
   </main>

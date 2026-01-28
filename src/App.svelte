@@ -1,10 +1,13 @@
 <script>
   import Layout from './lib/components/Layout.svelte';
+  import DayView from './lib/components/DayView.svelte';
   import { onMount } from 'svelte';
   import { initDatabase } from './lib/db/database.js';
 
   let dbReady = $state(false);
   let error = $state(null);
+  let selectedDate = $state(new Date());
+  let currentView = $state('today');
 
   onMount(async () => {
     try {
@@ -27,11 +30,15 @@
     <p>Loading...</p>
   </div>
 {:else}
-  <Layout>
-    <div class="today-view">
-      <h1>Today</h1>
-      <p>Quick capture coming soon...</p>
-    </div>
+  <Layout bind:selectedDate bind:currentView>
+    {#if currentView === 'today' || currentView === 'day'}
+      <DayView date={selectedDate} />
+    {:else if currentView === 'settings'}
+      <div class="settings-view">
+        <h1>Settings</h1>
+        <p>Settings coming soon...</p>
+      </div>
+    {/if}
   </Layout>
 {/if}
 
@@ -49,7 +56,12 @@
     color: #ef4444;
   }
 
-  .today-view h1 {
+  .settings-view {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .settings-view h1 {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1rem;

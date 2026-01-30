@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {
     startOfMonth,
     endOfMonth,
@@ -12,7 +12,12 @@
     subMonths
   } from 'date-fns';
 
-  let { selectedDate = $bindable(new Date()), datesWithNotes = [] } = $props();
+  interface Props {
+    selectedDate?: Date;
+    datesWithNotes?: string[];
+  }
+
+  let { selectedDate = $bindable(new Date()), datesWithNotes = [] }: Props = $props();
 
   let viewDate = $state(new Date());
 
@@ -25,7 +30,7 @@
     return eachDayOfInterval({ start: calStart, end: calEnd });
   });
 
-  function hasNotes(date) {
+  function hasNotes(date: Date): boolean {
     const dateStr = format(date, 'yyyy-MM-dd');
     return datesWithNotes.includes(dateStr);
   }
@@ -38,7 +43,7 @@
     viewDate = addMonths(viewDate, 1);
   }
 
-  function selectDay(date) {
+  function selectDay(date: Date) {
     selectedDate = date;
   }
 </script>

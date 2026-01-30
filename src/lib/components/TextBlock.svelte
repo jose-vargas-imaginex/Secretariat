@@ -1,9 +1,23 @@
-<script>
-  let { block, onUpdate = () => {} } = $props();
+<script lang="ts">
+  import type { Block } from '../db/types.js';
+
+  interface TextContent {
+    text?: string;
+    [key: string]: unknown;
+  }
+
+  interface Props {
+    block: Block;
+    onUpdate?: (content: TextContent) => void;
+  }
+
+  let { block, onUpdate = () => {} }: Props = $props();
+
+  let content = $derived(block.content as TextContent);
 
   let editing = $state(false);
   let editText = $state('');
-  let inputRef = $state(null);
+  let inputRef = $state<HTMLInputElement | null>(null);
 
   $effect(() => {
     if (editing && inputRef) {
@@ -12,18 +26,18 @@
   });
 
   function startEdit() {
-    editText = block.content.text || '';
+    editText = content.text || '';
     editing = true;
   }
 
   function saveEdit() {
-    if (editText.trim() !== (block.content.text || '')) {
-      onUpdate({ ...block.content, text: editText.trim() });
+    if (editText.trim() !== (content.text || '')) {
+      onUpdate({ ...content, text: editText.trim() });
     }
     editing = false;
   }
 
-  function handleKeyDown(e) {
+  function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       saveEdit();
@@ -46,7 +60,7 @@
     />
   {:else}
     <button type="button" class="block-text" onclick={startEdit}>
-      {block.content.text || ''}
+      {content.text || ''}
     </button>
   {/if}
 </div>

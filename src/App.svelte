@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Layout from './lib/components/Layout.svelte';
   import DayView from './lib/components/DayView.svelte';
   import Settings from './lib/components/Settings.svelte';
@@ -6,16 +6,16 @@
   import { initDatabase } from './lib/db/database.js';
 
   let dbReady = $state(false);
-  let error = $state(null);
+  let error = $state<string | null>(null);
   let selectedDate = $state(new Date());
-  let currentView = $state('today');
+  let currentView = $state<'today' | 'day' | 'settings'>('today');
 
   onMount(async () => {
     try {
       await initDatabase();
       dbReady = true;
     } catch (e) {
-      error = e.message;
+      error = (e as Error).message;
       console.error('Failed to initialize database:', e);
     }
   });

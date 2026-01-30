@@ -1,11 +1,14 @@
-<script>
+<script lang="ts">
   import { getSetting, setSetting } from '../db/settings.js';
-  import { getAllCategories, createCategory, deleteCategory, updateCategory } from '../db/categories.js';
+  import { getAllCategories, createCategory, deleteCategory } from '../db/categories.js';
+  import type { Category } from '../db/types.js';
+
+  type TestStatus = 'saved' | 'testing' | 'success' | 'error' | null;
 
   let geminiKey = $state('');
   let showKey = $state(false);
-  let testStatus = $state(null);
-  let categories = $state([]);
+  let testStatus = $state<TestStatus>(null);
+  let categories = $state<Category[]>([]);
 
   let newCategoryName = $state('');
   let newCategoryColor = $state('#6b7280');
@@ -46,7 +49,7 @@
     categories = getAllCategories();
   }
 
-  function removeCategory(id) {
+  function removeCategory(id: number) {
     deleteCategory(id);
     categories = getAllCategories();
   }

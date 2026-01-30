@@ -1,3 +1,5 @@
+import type { DefaultCategory } from './types.js';
+
 export const SCHEMA = `
   CREATE TABLE IF NOT EXISTS daily_notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +60,7 @@ export const SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_daily_notes_date ON daily_notes(date);
 `;
 
-export const DEFAULT_CATEGORIES = [
+export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Progress', color: '#22c55e', icon: null, is_default: 1, position: 0 },
   { name: 'Blocker', color: '#ef4444', icon: null, is_default: 1, position: 1 },
   { name: 'Idea', color: '#eab308', icon: null, is_default: 1, position: 2 },

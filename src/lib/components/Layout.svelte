@@ -1,13 +1,20 @@
-<script>
+<script lang="ts">
   import Sidebar from './Sidebar.svelte';
+  import type { Snippet } from 'svelte';
+
+  interface Props {
+    selectedDate?: Date;
+    currentView?: string;
+    children: Snippet;
+  }
 
   let {
     selectedDate = $bindable(new Date()),
     currentView = $bindable('today'),
     children
-  } = $props();
+  }: Props = $props();
 
-  function handleViewChange(view) {
+  function handleViewChange(view: string) {
     currentView = view;
   }
 </script>

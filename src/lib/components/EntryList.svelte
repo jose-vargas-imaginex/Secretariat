@@ -1,7 +1,12 @@
-<script>
+<script lang="ts">
   import EntryCard from './EntryCard.svelte';
+  import type { Entry } from '../db/types.js';
 
-  let { entries = [] } = $props();
+  interface Props {
+    entries?: Entry[];
+  }
+
+  let { entries = [] }: Props = $props();
 </script>
 
 <div class="entry-list">

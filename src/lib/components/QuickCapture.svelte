@@ -1,12 +1,18 @@
-<script>
+<script lang="ts">
   import CategoryPicker from './CategoryPicker.svelte';
+  import type { Category } from '../db/types.js';
 
-  let { categories = [], onSubmit = () => {} } = $props();
+  interface Props {
+    categories?: Category[];
+    onSubmit?: (data: { text: string; categoryId: number | null }) => void;
+  }
+
+  let { categories = [], onSubmit = () => {} }: Props = $props();
 
   let text = $state('');
-  let categoryId = $state(null);
+  let categoryId = $state<number | null>(null);
 
-  function handleSubmit(e) {
+  function handleSubmit(e: Event) {
     e.preventDefault();
     if (!text.trim()) return;
 
@@ -15,7 +21,7 @@
     categoryId = null;
   }
 
-  function handleKeyDown(e) {
+  function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       handleSubmit(e);
     }

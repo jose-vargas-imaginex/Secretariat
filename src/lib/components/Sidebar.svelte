@@ -1,9 +1,14 @@
-<script>
+<script lang="ts">
   import Calendar from './Calendar.svelte';
   import { getDatesWithNotes } from '../db/dailyNotes.js';
   import { startOfMonth, endOfMonth } from 'date-fns';
 
-  let { selectedDate = $bindable(new Date()), onViewChange = () => {} } = $props();
+  interface Props {
+    selectedDate?: Date;
+    onViewChange?: (view: string) => void;
+  }
+
+  let { selectedDate = $bindable(new Date()), onViewChange = () => {} }: Props = $props();
 
   let datesWithNotes = $derived.by(() => {
     const start = startOfMonth(selectedDate);

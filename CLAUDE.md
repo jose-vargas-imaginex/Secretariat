@@ -11,6 +11,14 @@ Secretariat is an AI-augmented notes app that helps keep track of your work.
 - **Frontend**: Svelte 5 (with runes)
 - **Desktop**: Electron
 - **Build**: Vite with vite-plugin-electron
+- **Language**: TypeScript
+
+## Code Standards
+
+- **Always use TypeScript** - All new code must be written in TypeScript. Use `<script lang="ts">` in Svelte components and `.ts` extensions for modules.
+- Define explicit types for props, state, and function parameters
+- Use interfaces for component Props (e.g., `interface Props { ... }`)
+- Import types from `src/lib/db/types.ts` for database entities
 
 ## Build Commands
 

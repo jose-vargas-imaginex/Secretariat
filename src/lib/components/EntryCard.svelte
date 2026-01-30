@@ -1,19 +1,24 @@
-<script>
-  import TextBlock from './TextBlock.svelte';
-  import { format } from 'date-fns';
-  import { getBlocksForParent, updateBlock } from '../db/blocks.js';
+<script lang="ts">
+  import TextBlock from "./TextBlock.svelte";
+  import { format } from "date-fns";
+  import { getBlocksForParent, updateBlock } from "../db/blocks.js";
+  import type { Entry } from "../db/types.js";
 
-  let { entry } = $props();
+  interface Props {
+    entry: Entry;
+  }
+
+  let { entry }: Props = $props();
 
   let refreshCounter = $state(0);
 
   let blocks = $derived.by(() => {
     // Include refreshCounter to trigger re-derivation when blocks are updated
     void refreshCounter;
-    return getBlocksForParent('entry', entry.id);
+    return getBlocksForParent("entry", entry.id);
   });
 
-  function handleBlockUpdate(blockId, newContent) {
+  function handleBlockUpdate(blockId: number, newContent: unknown) {
     updateBlock(blockId, newContent);
     refreshCounter++;
   }
@@ -22,7 +27,7 @@
 <article class="entry-card">
   <div class="entry-header">
     <span class="timestamp">
-      {format(new Date(entry.created_at), 'h:mm a')}
+      {format(new Date(entry.created_at), "h:mm a")}
     </span>
     {#if entry.category_name}
       <span
@@ -39,7 +44,7 @@
 
   <div class="entry-content">
     {#each blocks as block (block.id)}
-      {#if block.type === 'text'}
+      {#if block.type === "text"}
         <TextBlock
           {block}
           onUpdate={(content) => handleBlockUpdate(block.id, content)}

@@ -1,13 +1,17 @@
-<script>
-  import { format, isToday } from 'date-fns';
-  import QuickCapture from './QuickCapture.svelte';
-  import EntryList from './EntryList.svelte';
-  import { getOrCreateDailyNote } from '../db/dailyNotes.js';
-  import { createEntry, getEntriesForDailyNote } from '../db/entries.js';
-  import { createBlock } from '../db/blocks.js';
-  import { getAllCategories } from '../db/categories.js';
+<script lang="ts">
+  import { format, isToday } from "date-fns";
+  import QuickCapture from "./QuickCapture.svelte";
+  import EntryList from "./EntryList.svelte";
+  import { getOrCreateDailyNote } from "../db/dailyNotes.js";
+  import { createEntry, getEntriesForDailyNote } from "../db/entries.js";
+  import { createBlock } from "../db/blocks.js";
+  import { getAllCategories } from "../db/categories.js";
 
-  let { date = new Date() } = $props();
+  interface Props {
+    date?: Date;
+  }
+
+  let { date = new Date() }: Props = $props();
 
   let refreshCounter = $state(0);
 
@@ -24,22 +28,30 @@
     return [];
   });
 
-  function handleCapture({ text, categoryId }) {
+  function handleCapture({
+    text,
+    categoryId,
+  }: {
+    text: string;
+    categoryId: number | null;
+  }) {
     if (!dailyNote) return;
 
     const entryId = createEntry(dailyNote.id, categoryId);
-    createBlock('entry', entryId, 'text', { text });
+    createBlock("entry", entryId, "text", { text });
     refreshCounter++;
   }
 
-  let title = $derived(isToday(date) ? 'Today' : format(date, 'EEEE, MMMM d, yyyy'));
+  let title = $derived(
+    isToday(date) ? "Today" : format(date, "EEEE, MMMM d, yyyy"),
+  );
 </script>
 
 <div class="day-view">
   <header class="day-header">
     <h1>{title}</h1>
     {#if !isToday(date)}
-      <p class="date-subtitle">{format(date, 'MMMM d, yyyy')}</p>
+      <p class="date-subtitle">{format(date, "MMMM d, yyyy")}</p>
     {/if}
   </header>
 

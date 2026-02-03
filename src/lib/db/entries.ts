@@ -1,11 +1,15 @@
 import { getDb, flushInMemoryDataToStorage } from './database.js';
 import type { Entry } from './types.js';
 
-export function createEntry(dailyNoteId: number, categoryId: number | null = null): number {
+export function createEntry(
+  dailyNoteId: number,
+  categoryId: number | null = null,
+  title: string | null = null
+): number {
   const db = getDb();
 
-  const stmt = db.prepare('INSERT INTO entries (daily_note_id, category_id) VALUES (?, ?)');
-  stmt.run([dailyNoteId, categoryId]);
+  const stmt = db.prepare('INSERT INTO entries (daily_note_id, category_id, title) VALUES (?, ?, ?)');
+  stmt.run([dailyNoteId, categoryId, title]);
 
   const result = db.exec('SELECT last_insert_rowid()');
   const id = result[0].values[0][0] as number;
@@ -46,6 +50,14 @@ export function updateEntryCategory(entryId: number, categoryId: number | null):
   const db = getDb();
   const stmt = db.prepare('UPDATE entries SET category_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
   stmt.run([categoryId, entryId]);
+  stmt.free();
+  flushInMemoryDataToStorage();
+}
+
+export function updateEntryTitle(entryId: number, title: string | null): void {
+  const db = getDb();
+  const stmt = db.prepare('UPDATE entries SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+  stmt.run([title, entryId]);
   stmt.free();
   flushInMemoryDataToStorage();
 }

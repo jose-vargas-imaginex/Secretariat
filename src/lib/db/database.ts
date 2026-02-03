@@ -48,6 +48,7 @@ export async function initDatabase(): Promise<Database> {
   const savedData = await loadFromStorage();
   if (savedData) {
     db = new SQL.Database(savedData);
+    await runMigrations();
   } else {
     db = new SQL.Database();
     db.run(SCHEMA);
@@ -55,6 +56,19 @@ export async function initDatabase(): Promise<Database> {
   }
 
   return db;
+}
+
+async function runMigrations(): Promise<void> {
+  if (!db) return;
+
+  // Check if title column exists in entries table
+  const tableInfo = db.exec("PRAGMA table_info(entries)");
+  const columns = tableInfo[0]?.values.map((row) => row[1]) ?? [];
+
+  if (!columns.includes("title")) {
+    db.run("ALTER TABLE entries ADD COLUMN title TEXT");
+    await flushInMemoryDataToStorage();
+  }
 }
 
 async function seedDefaultCategories(): Promise<void> {

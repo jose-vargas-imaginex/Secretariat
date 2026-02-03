@@ -1,5 +1,6 @@
 <script lang="ts">
   import Sidebar from './Sidebar.svelte';
+  import ToastContainer from './ToastContainer.svelte';
   import type { Snippet } from 'svelte';
 
   interface Props {
@@ -28,6 +29,7 @@
     {@render children()}
   </main>
 </div>
+<ToastContainer />
 
 <style>
   .layout {

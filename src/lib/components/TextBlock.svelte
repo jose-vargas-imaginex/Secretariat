@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Block } from '../db/types.js';
+  import type { Block } from "../db/types.js";
 
   interface TextContent {
     text?: string;
@@ -9,15 +9,18 @@
   interface Props {
     block: Block;
     onUpdate?: (content: TextContent) => void;
+    onDelete?: () => void;
   }
 
-  let { block, onUpdate = () => {} }: Props = $props();
+  let { block, onUpdate = () => {}, onDelete }: Props = $props();
 
   let content = $derived(block.content as TextContent);
 
   let editing = $state(false);
-  let editText = $state('');
+  let editText = $state("");
   let inputRef = $state<HTMLInputElement | null>(null);
+  let pendingDelete = $state(false);
+  let deleteTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
 
   $effect(() => {
     if (editing && inputRef) {
@@ -25,31 +28,71 @@
     }
   });
 
+  // Cleanup timeout on component destroy
+  $effect(() => {
+    return () => {
+      if (deleteTimeoutId) {
+        clearTimeout(deleteTimeoutId);
+      }
+    };
+  });
+
   function startEdit() {
-    editText = content.text || '';
+    if (pendingDelete) return;
+    editText = content.text || "";
     editing = true;
   }
 
   function saveEdit() {
-    if (editText.trim() !== (content.text || '')) {
+    if (editText.trim() !== (content.text || "")) {
       onUpdate({ ...content, text: editText.trim() });
     }
     editing = false;
   }
 
   function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       saveEdit();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       editing = false;
     }
   }
+
+  function startDelete(e: MouseEvent) {
+    e.stopPropagation();
+    pendingDelete = true;
+    deleteTimeoutId = setTimeout(() => {
+      if (onDelete) {
+        onDelete();
+      }
+      pendingDelete = false;
+      deleteTimeoutId = null;
+    }, 5000);
+  }
+
+  function cancelDelete() {
+    if (deleteTimeoutId) {
+      clearTimeout(deleteTimeoutId);
+      deleteTimeoutId = null;
+    }
+    pendingDelete = false;
+  }
 </script>
 
-<div class="text-block" class:ai-authored={block.author === 'ai'}>
-  {#if editing}
+<div
+  class="text-block"
+  class:ai-authored={block.author === "ai"}
+  class:pending-delete={pendingDelete}
+>
+  {#if pendingDelete}
+    <span class="deleted-message">
+      Deleted. <button type="button" class="undo-button" onclick={cancelDelete}
+        >Undo</button
+      >?
+    </span>
+  {:else if editing}
     <input
       type="text"
       class="edit-input"
@@ -59,9 +102,21 @@
       onkeydown={handleKeyDown}
     />
   {:else}
-    <button type="button" class="block-text" onclick={startEdit}>
-      {content.text || ''}
-    </button>
+    <div class="block-content">
+      <button type="button" class="block-text" onclick={startEdit}>
+        {content.text || ""}
+      </button>
+      {#if onDelete}
+        <button
+          type="button"
+          class="delete-button"
+          onclick={startDelete}
+          aria-label="Delete block"
+        >
+          &times;
+        </button>
+      {/if}
+    </div>
   {/if}
 </div>
 
@@ -76,9 +131,19 @@
     margin-left: -0.5rem;
   }
 
+  .text-block.pending-delete {
+    opacity: 0.6;
+  }
+
+  .block-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .block-text {
     display: block;
-    width: 100%;
+    flex: 1;
     margin: 0;
     padding: 0;
     border: none;
@@ -97,6 +162,50 @@
 
   .block-text:focus {
     outline: none;
+  }
+
+  .delete-button {
+    opacity: 0;
+    padding: 0.125rem 0.375rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #888);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    transition:
+      opacity 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .block-content:hover .delete-button {
+    opacity: 1;
+  }
+
+  .delete-button:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.1));
+    color: var(--text-primary, #333);
+  }
+
+  .deleted-message {
+    font-style: italic;
+    color: var(--text-muted, #888);
+  }
+
+  .undo-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--accent-color, #007bff);
+    font: inherit;
+    font-style: italic;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .undo-button:hover {
+    color: var(--accent-color-hover, #0056b3);
   }
 
   .edit-input {

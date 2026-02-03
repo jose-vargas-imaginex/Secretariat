@@ -19,6 +19,7 @@ Secretariat is an AI-augmented notes app that helps keep track of your work.
 - Define explicit types for props, state, and function parameters
 - Use interfaces for component Props (e.g., `interface Props { ... }`)
 - Import types from `src/lib/db/types.ts` for database entities
+- **Svelte files** - Always use the `svelte:svelte-file-editor` agent or `svelte:svelte-code-writer` skill when creating or editing `.svelte` files to ensure Svelte 5 best practices and validation
 
 ## Build Commands
 
@@ -37,3 +38,13 @@ pkill -f "Secretariat.*vite"
 # Bad - kills ALL Electron apps including VSCode
 pkill -f "Electron"
 ```
+
+## Chrome DevTools MCP
+
+To open Chrome with remote debugging enabled (required for Chrome DevTools MCP):
+
+```bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+```
+
+This allows Claude to interact with the browser for testing UI changes.

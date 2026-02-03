@@ -4,7 +4,6 @@
   import EntryList from "./EntryList.svelte";
   import { getOrCreateDailyNote } from "../db/dailyNotes.js";
   import { createEntry, getEntriesForDailyNote } from "../db/entries.js";
-  import { createBlock } from "../db/blocks.js";
   import { getAllCategories } from "../db/categories.js";
 
   interface Props {
@@ -37,8 +36,7 @@
   }) {
     if (!dailyNote) return;
 
-    const entryId = createEntry(dailyNote.id, categoryId);
-    createBlock("entry", entryId, "text", { text });
+    createEntry(dailyNote.id, categoryId, text);
     refreshCounter++;
   }
 
@@ -57,7 +55,7 @@
 
   <QuickCapture {categories} onSubmit={handleCapture} />
 
-  <EntryList {entries} />
+  <EntryList {entries} onEntryDeleted={() => refreshCounter++} />
 </div>
 
 <style>

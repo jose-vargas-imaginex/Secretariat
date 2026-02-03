@@ -20,6 +20,7 @@ export const SCHEMA = `
   CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     daily_note_id INTEGER NOT NULL,
+    title TEXT,
     category_id INTEGER,
     is_ai_generated INTEGER DEFAULT 0,
     source_entry_ids TEXT,

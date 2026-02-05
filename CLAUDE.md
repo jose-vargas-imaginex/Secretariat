@@ -41,10 +41,18 @@ pkill -f "Electron"
 
 ## Chrome DevTools MCP
 
-To open Chrome with remote debugging enabled (required for Chrome DevTools MCP):
+When asked to debug or perform manual UI testing with the running app, open Chrome with remote debugging enabled (required for Chrome DevTools MCP):
 
 ```bash
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
 ```
 
 This allows Claude to interact with the browser for testing UI changes.
+
+Then use
+
+```bash
+chrome-devtools - navigate_page(url: "http://localhost:5174", type: "url")
+```
+
+To navigate to the app

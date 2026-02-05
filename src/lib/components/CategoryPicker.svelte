@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type { Category } from '../db/types.js';
+  import type { Category } from "../services/db/types.js";
 
   interface Props {
     categories?: Category[];
     selectedId?: number | null;
   }
 
-  let { categories = [], selectedId = $bindable<number | null>(null) }: Props = $props();
+  let { categories = [], selectedId = $bindable<number | null>(null) }: Props =
+    $props();
 </script>
 
 <select class="category-picker" name="category" bind:value={selectedId}>

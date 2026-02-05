@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Block } from "../db/types.js";
+  import type { Block } from "../services/db/types.js";
 
   interface TextContent {
     text?: string;

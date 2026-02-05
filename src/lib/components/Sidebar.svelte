@@ -1,14 +1,15 @@
 <script lang="ts">
-  import Calendar from './Calendar.svelte';
-  import { getDatesWithNotes } from '../db/dailyNotes.js';
-  import { startOfMonth, endOfMonth } from 'date-fns';
+  import Calendar from "./Calendar.svelte";
+  import { getDatesWithNotes } from "../services/db/dailyNotes.js";
+  import { startOfMonth, endOfMonth } from "date-fns";
 
   interface Props {
     selectedDate?: Date;
     onViewChange?: (view: string) => void;
   }
 
-  let { selectedDate = $bindable(new Date()), onViewChange = () => {} }: Props = $props();
+  let { selectedDate = $bindable(new Date()), onViewChange = () => {} }: Props =
+    $props();
 
   let datesWithNotes = $derived.by(() => {
     const start = startOfMonth(selectedDate);
@@ -18,7 +19,7 @@
 
   function goToToday() {
     selectedDate = new Date();
-    onViewChange('today');
+    onViewChange("today");
   }
 </script>
 
@@ -28,12 +29,7 @@
   </div>
 
   <nav class="nav">
-    <button
-      class="nav-item"
-      onclick={goToToday}
-    >
-      Today
-    </button>
+    <button class="nav-item" onclick={goToToday}> Today </button>
   </nav>
 
   <div class="sidebar-section">
@@ -47,7 +43,9 @@
   </div>
 
   <div class="sidebar-footer">
-    <button class="nav-item" onclick={() => onViewChange('settings')}>Settings</button>
+    <button class="nav-item" onclick={() => onViewChange("settings")}
+      >Settings</button
+    >
   </div>
 </aside>
 

@@ -1,0 +1,2 @@
+Rename entries to blocks and viceversa
+Create a more robust service for talking to the DB that maybe uses Svelte stores

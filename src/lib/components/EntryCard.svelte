@@ -7,17 +7,20 @@
     createBlock,
     updateBlock,
     deleteBlock,
-  } from "../db/blocks.js";
-  import { updateEntryTitle, updateEntryCategory } from "../db/entries.js";
-  import { getAllCategories } from "../db/categories.js";
-  import type { Entry } from "../db/types.js";
+  } from "../services/db/blocks.js";
+  import {
+    updateEntryTitle,
+    updateEntryCategory,
+  } from "../services/db/entries.js";
+  import type { Entry } from "../services/db/types.js";
 
   interface Props {
     entry: Entry;
     onDelete?: () => void;
+    onCategoryChange?: () => void;
   }
 
-  let { entry, onDelete }: Props = $props();
+  let { entry, onDelete, onCategoryChange }: Props = $props();
 
   // Use an object for refresh key - new reference forces $derived to recalculate
   let refreshKey = $state({});
@@ -25,11 +28,6 @@
   // Title editing state
   let isEditingTitle = $state(false);
   let editedTitle = $state("");
-
-  // Category state - derived from entry for reactivity
-  let currentCategoryId = $derived(entry.category_id);
-  let currentCategoryName = $derived(entry.category_name);
-  let currentCategoryColor = $derived(entry.category_color);
 
   function handleTitleClick() {
     editedTitle = entry.title ?? "";
@@ -82,22 +80,11 @@
 
   function handleCategoryChange(categoryId: number | null) {
     updateEntryCategory(entry.id, categoryId);
-    entry.category_id = categoryId;
-    if (categoryId === null) {
-      entry.category_name = undefined;
-      entry.category_color = undefined;
-    } else {
-      const categories = getAllCategories();
-      const category = categories.find(c => c.id === categoryId);
-      if (category) {
-        entry.category_name = category.name;
-        entry.category_color = category.color;
-      }
-    }
+    onCategoryChange?.();
   }
 </script>
 
-<article class="entry-card">
+<article class="entry-card" class:ai-generated={entry.is_ai_generated}>
   <div class="entry-header">
     <span class="timestamp">
       {format(new Date(entry.created_at), "h:mm a")}
@@ -120,20 +107,35 @@
         Add title...
       </button>
     {/if}
-    <CategoryChip
-      categoryId={currentCategoryId}
-      categoryName={currentCategoryName}
-      categoryColor={currentCategoryColor}
-      onCategoryChange={handleCategoryChange}
-    />
+    {#if !entry.is_ai_generated}
+      <CategoryChip
+        categoryId={entry.category_id}
+        categoryName={entry.category_name}
+        categoryColor={entry.category_color}
+        onCategoryChange={handleCategoryChange}
+      />
+    {/if}
     {#if entry.is_ai_generated}
-      <span class="ai-badge">AI</span>
+      <span class="ai-badge"
+        >{entry.title === "Daily Summary" ? "AI Summary" : "AI"}</span
+      >
     {/if}
     {#if onDelete}
       <button class="delete-btn" onclick={onDelete} aria-label="Delete entry">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <path
+            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+          ></path>
           <line x1="10" y1="11" x2="10" y2="17"></line>
           <line x1="14" y1="11" x2="14" y2="17"></line>
         </svg>
@@ -143,7 +145,16 @@
 
   <div class="entry-content">
     {#each blocks as block (block.id)}
-      {#if block.type === "text"}
+      {#if block.type === "category-heading"}
+        <div class="category-heading">
+          <span
+            class="category-pill"
+            style="background-color: {block.content.color}20; color: {block.content.color}"
+          >
+            {block.content.name}
+          </span>
+        </div>
+      {:else if block.type === "text"}
         <TextBlock
           {block}
           onUpdate={(content) => handleBlockUpdate(block.id, content)}
@@ -158,7 +169,16 @@
       </button>
     {:else}
       <button class="add-block-btn" onclick={handleAddBlock}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
@@ -175,6 +195,15 @@
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 0.75rem;
+  }
+
+  .entry-card.ai-generated {
+    border-left: 3px solid var(--accent-color);
+    background: linear-gradient(
+      135deg,
+      var(--bg-secondary) 0%,
+      rgba(102, 126, 234, 0.05) 100%
+    );
   }
 
   .entry-header {
@@ -250,7 +279,10 @@
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s, color 0.15s, background-color 0.15s;
+    transition:
+      opacity 0.15s,
+      color 0.15s,
+      background-color 0.15s;
   }
 
   .entry-card:hover .delete-btn {
@@ -278,7 +310,9 @@
     text-align: left;
     cursor: pointer;
     font-size: inherit;
-    transition: border-color 0.15s, color 0.15s;
+    transition:
+      border-color 0.15s,
+      color 0.15s;
   }
 
   .empty-placeholder:hover {
@@ -299,7 +333,10 @@
     cursor: pointer;
     border-radius: 4px;
     opacity: 0;
-    transition: opacity 0.15s, color 0.15s, background-color 0.15s;
+    transition:
+      opacity 0.15s,
+      color 0.15s,
+      background-color 0.15s;
   }
 
   .entry-card:hover .add-block-btn {
@@ -309,5 +346,24 @@
   .add-block-btn:hover {
     color: var(--accent-color);
     background-color: var(--bg-hover);
+  }
+
+  .category-heading {
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .category-heading:first-child {
+    margin-top: 0;
+  }
+
+  .category-pill {
+    display: inline-block;
+    font-size: 0.625rem;
+    font-weight: 500;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 </style>

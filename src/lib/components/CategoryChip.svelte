@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getAllCategories } from '../db/categories.js';
-  import type { Category } from '../db/types.js';
+  import { getAllCategories } from "../services/db/categories.js";
+  import type { Category } from "../services/db/types.js";
 
   interface Props {
     categoryId: number | null;
@@ -9,7 +9,8 @@
     onCategoryChange: (categoryId: number | null) => void;
   }
 
-  let { categoryId, categoryName, categoryColor, onCategoryChange }: Props = $props();
+  let { categoryId, categoryName, categoryColor, onCategoryChange }: Props =
+    $props();
 
   let isOpen = $state(false);
   let categories = $state<Category[]>([]);
@@ -34,19 +35,19 @@
   }
 
   function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       isOpen = false;
     }
   }
 
   $effect(() => {
     if (isOpen) {
-      document.addEventListener('click', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener("click", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   });
 </script>
@@ -55,10 +56,12 @@
   <button
     class="chip"
     class:has-category={categoryId !== null && categoryName}
-    style={categoryColor ? `background-color: ${categoryColor}20; color: ${categoryColor}` : ''}
+    style={categoryColor
+      ? `background-color: ${categoryColor}20; color: ${categoryColor}`
+      : ""}
     onclick={handleChipClick}
   >
-    {categoryName ?? 'Uncategorized'}
+    {categoryName ?? "Uncategorized"}
   </button>
 
   {#if isOpen}
@@ -77,9 +80,7 @@
           class:selected={categoryId === category.id}
           onclick={() => handleSelect(category.id)}
         >
-          <span
-            class="color-dot"
-            style="background-color: {category.color}"
+          <span class="color-dot" style="background-color: {category.color}"
           ></span>
           {category.name}
         </button>
@@ -105,7 +106,9 @@
     cursor: pointer;
     background-color: var(--bg-secondary);
     color: var(--text-secondary);
-    transition: background-color 0.15s, color 0.15s;
+    transition:
+      background-color 0.15s,
+      color 0.15s;
   }
 
   .chip:hover {

@@ -62,6 +62,53 @@ export function updateEntryTitle(entryId: number, title: string | null): void {
   flushInMemoryDataToStorage();
 }
 
+export function createAiEntry(
+  dailyNoteId: number,
+  title: string,
+  sourceEntryIds: number[]
+): number {
+  const db = getDb();
+
+  const stmt = db.prepare(
+    'INSERT INTO entries (daily_note_id, title, is_ai_generated, source_entry_ids) VALUES (?, ?, 1, ?)'
+  );
+  stmt.run([dailyNoteId, title, JSON.stringify(sourceEntryIds)]);
+
+  const result = db.exec('SELECT last_insert_rowid()');
+  const id = result[0].values[0][0] as number;
+
+  stmt.free();
+  flushInMemoryDataToStorage();
+
+  return id;
+}
+
+export function getAiSummaryForDailyNote(dailyNoteId: number): Entry | null {
+  const db = getDb();
+
+  const stmt = db.prepare(`
+    SELECT e.*, c.name as category_name, c.color as category_color
+    FROM entries e
+    LEFT JOIN categories c ON e.category_id = c.id
+    WHERE e.daily_note_id = ? AND e.is_ai_generated = 1 AND e.title = 'Daily Summary'
+    LIMIT 1
+  `);
+  stmt.bind([dailyNoteId]);
+
+  let entry: Entry | null = null;
+  const columns = stmt.getColumnNames();
+
+  if (stmt.step()) {
+    const row = stmt.get();
+    const obj: Record<string, unknown> = {};
+    columns.forEach((col, i) => obj[col] = row[i]);
+    entry = obj as unknown as Entry;
+  }
+  stmt.free();
+
+  return entry;
+}
+
 export function deleteEntry(entryId: number): void {
   const db = getDb();
 

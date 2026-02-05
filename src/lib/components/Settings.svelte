@@ -1,51 +1,55 @@
 <script lang="ts">
-  import { getSetting, setSetting } from '../db/settings.js';
-  import { getAllCategories, createCategory, deleteCategory } from '../db/categories.js';
-  import type { Category } from '../db/types.js';
+  import { getSetting, setSetting } from "../services/db/settings.js";
+  import {
+    getAllCategories,
+    createCategory,
+    deleteCategory,
+  } from "../services/db/categories.js";
+  import type { Category } from "../services/db/types.js";
 
-  type TestStatus = 'saved' | 'testing' | 'success' | 'error' | null;
+  type TestStatus = "saved" | "testing" | "success" | "error" | null;
 
-  let geminiKey = $state('');
+  let geminiKey = $state("");
   let showKey = $state(false);
   let testStatus = $state<TestStatus>(null);
   let categories = $state<Category[]>([]);
 
-  let newCategoryName = $state('');
-  let newCategoryColor = $state('#6b7280');
+  let newCategoryName = $state("");
+  let newCategoryColor = $state("#6b7280");
 
   $effect(() => {
-    geminiKey = getSetting('gemini_api_key') || '';
+    geminiKey = getSetting("gemini_api_key") || "";
     categories = getAllCategories();
   });
 
   function saveApiKey() {
-    setSetting('gemini_api_key', geminiKey);
-    testStatus = 'saved';
-    setTimeout(() => testStatus = null, 2000);
+    setSetting("gemini_api_key", geminiKey);
+    testStatus = "saved";
+    setTimeout(() => (testStatus = null), 2000);
   }
 
   async function testApiKey() {
-    testStatus = 'testing';
+    testStatus = "testing";
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`,
       );
       if (response.ok) {
-        testStatus = 'success';
+        testStatus = "success";
       } else {
-        testStatus = 'error';
+        testStatus = "error";
       }
     } catch {
-      testStatus = 'error';
+      testStatus = "error";
     }
-    setTimeout(() => testStatus = null, 3000);
+    setTimeout(() => (testStatus = null), 3000);
   }
 
   function addCategory() {
     if (!newCategoryName.trim()) return;
     createCategory(newCategoryName.trim(), newCategoryColor);
-    newCategoryName = '';
-    newCategoryColor = '#6b7280';
+    newCategoryName = "";
+    newCategoryColor = "#6b7280";
     categories = getAllCategories();
   }
 
@@ -60,17 +64,19 @@
 
   <section class="settings-section">
     <h2>Gemini API Key</h2>
-    <p class="section-desc">Enter your Google Gemini API key to enable AI features.</p>
+    <p class="section-desc">
+      Enter your Google Gemini API key to enable AI features.
+    </p>
 
     <div class="api-key-row">
       <input
-        type={showKey ? 'text' : 'password'}
+        type={showKey ? "text" : "password"}
         class="api-key-input"
         bind:value={geminiKey}
         placeholder="Enter your API key"
       />
-      <button class="btn secondary" onclick={() => showKey = !showKey}>
-        {showKey ? 'Hide' : 'Show'}
+      <button class="btn secondary" onclick={() => (showKey = !showKey)}>
+        {showKey ? "Hide" : "Show"}
       </button>
     </div>
 
@@ -79,13 +85,13 @@
       <button class="btn secondary" onclick={testApiKey} disabled={!geminiKey}>
         Test Connection
       </button>
-      {#if testStatus === 'saved'}
+      {#if testStatus === "saved"}
         <span class="status success">Saved!</span>
-      {:else if testStatus === 'testing'}
+      {:else if testStatus === "testing"}
         <span class="status">Testing...</span>
-      {:else if testStatus === 'success'}
+      {:else if testStatus === "success"}
         <span class="status success">Connection successful!</span>
-      {:else if testStatus === 'error'}
+      {:else if testStatus === "error"}
         <span class="status error">Connection failed</span>
       {/if}
     </div>
@@ -98,18 +104,13 @@
     <div class="category-list">
       {#each categories as cat (cat.id)}
         <div class="category-item">
-          <span
-            class="category-color"
-            style="background-color: {cat.color}"
+          <span class="category-color" style="background-color: {cat.color}"
           ></span>
           <span class="category-name">{cat.name}</span>
           {#if cat.is_default}
             <span class="default-badge">Default</span>
           {:else}
-            <button
-              class="delete-btn"
-              onclick={() => removeCategory(cat.id)}
-            >
+            <button class="delete-btn" onclick={() => removeCategory(cat.id)}>
               Delete
             </button>
           {/if}
@@ -124,11 +125,7 @@
         bind:value={newCategoryName}
         placeholder="Category name"
       />
-      <input
-        type="color"
-        class="color-input"
-        bind:value={newCategoryColor}
-      />
+      <input type="color" class="color-input" bind:value={newCategoryColor} />
       <button class="btn primary" onclick={addCategory}>Add</button>
     </div>
   </section>

@@ -2,15 +2,17 @@
   import { format, isToday } from "date-fns";
   import QuickCapture from "./QuickCapture.svelte";
   import EntryList from "./EntryList.svelte";
-  import { getOrCreateDailyNote } from "../db/dailyNotes.js";
-  import { createEntry, getEntriesForDailyNote } from "../db/entries.js";
-  import { getAllCategories } from "../db/categories.js";
+  import SummarizeButton from "./SummarizeButton.svelte";
+  import { getOrCreateDailyNote } from "../services/db/dailyNotes.js";
+  import { createEntry, getEntriesForDailyNote, getAiSummaryForDailyNote } from "../services/db/entries.js";
+  import { getAllCategories } from "../services/db/categories.js";
 
   interface Props {
     date?: Date;
+    onNavigateToSettings?: () => void;
   }
 
-  let { date = new Date() }: Props = $props();
+  let { date = new Date(), onNavigateToSettings }: Props = $props();
 
   let refreshCounter = $state(0);
 
@@ -25,6 +27,16 @@
       return getEntriesForDailyNote(dailyNote.id);
     }
     return [];
+  });
+
+  let userEntries = $derived(entries.filter((e) => !e.is_ai_generated));
+  let hasUserEntries = $derived(userEntries.length > 0);
+  let existingSummary = $derived.by(() => {
+    refreshCounter;
+    if (dailyNote) {
+      return getAiSummaryForDailyNote(dailyNote.id);
+    }
+    return null;
   });
 
   function handleCapture({
@@ -55,7 +67,17 @@
 
   <QuickCapture {categories} onSubmit={handleCapture} />
 
-  <EntryList {entries} onEntryDeleted={() => refreshCounter++} />
+  {#if dailyNote}
+    <SummarizeButton
+      dailyNoteId={dailyNote.id}
+      {hasUserEntries}
+      {existingSummary}
+      onSummaryCreated={() => refreshCounter++}
+      {onNavigateToSettings}
+    />
+  {/if}
+
+  <EntryList {entries} onEntryDeleted={() => refreshCounter++} onCategoryChange={() => refreshCounter++} />
 </div>
 
 <style>

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Layout from './lib/components/Layout.svelte';
-  import DayView from './lib/components/DayView.svelte';
-  import Settings from './lib/components/Settings.svelte';
-  import { onMount } from 'svelte';
-  import { initDatabase } from './lib/db/database.js';
+  import Layout from "./lib/components/Layout.svelte";
+  import DayView from "./lib/components/DayView.svelte";
+  import Settings from "./lib/components/Settings.svelte";
+  import { onMount } from "svelte";
+  import { initDatabase } from "./lib/services/db/database.js";
 
   let dbReady = $state(false);
   let error = $state<string | null>(null);
   let selectedDate = $state(new Date());
-  let currentView = $state<'today' | 'day' | 'settings'>('today');
+  let currentView = $state<"today" | "day" | "settings">("today");
 
   onMount(async () => {
     try {
@@ -16,7 +16,7 @@
       dbReady = true;
     } catch (e) {
       error = (e as Error).message;
-      console.error('Failed to initialize database:', e);
+      console.error("Failed to initialize database:", e);
     }
   });
 </script>
@@ -32,16 +32,20 @@
   </div>
 {:else}
   <Layout bind:selectedDate bind:currentView>
-    {#if currentView === 'today' || currentView === 'day'}
-      <DayView date={selectedDate} />
-    {:else if currentView === 'settings'}
+    {#if currentView === "today" || currentView === "day"}
+      <DayView
+        date={selectedDate}
+        onNavigateToSettings={() => (currentView = "settings")}
+      />
+    {:else if currentView === "settings"}
       <Settings />
     {/if}
   </Layout>
 {/if}
 
 <style>
-  .loading, .error {
+  .loading,
+  .error {
     display: flex;
     flex-direction: column;
     align-items: center;

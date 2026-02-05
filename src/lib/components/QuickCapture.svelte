@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CategoryPicker from './CategoryPicker.svelte';
-  import type { Category } from '../db/types.js';
+  import CategoryPicker from "./CategoryPicker.svelte";
+  import type { Category } from "../services/db/types.js";
 
   interface Props {
     categories?: Category[];
@@ -9,7 +9,7 @@
 
   let { categories = [], onSubmit = () => {} }: Props = $props();
 
-  let text = $state('');
+  let text = $state("");
   let categoryId = $state<number | null>(null);
 
   function handleSubmit(e: Event) {
@@ -17,12 +17,12 @@
     if (!text.trim()) return;
 
     onSubmit({ text: text.trim(), categoryId });
-    text = '';
+    text = "";
     categoryId = null;
   }
 
   function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       handleSubmit(e);
     }
   }

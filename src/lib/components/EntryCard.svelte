@@ -26,10 +26,10 @@
   let isEditingTitle = $state(false);
   let editedTitle = $state("");
 
-  // Category state - local state for immediate UI updates
-  let currentCategoryId = $state(entry.category_id);
-  let currentCategoryName = $state(entry.category_name);
-  let currentCategoryColor = $state(entry.category_color);
+  // Category state - derived from entry for reactivity
+  let currentCategoryId = $derived(entry.category_id);
+  let currentCategoryName = $derived(entry.category_name);
+  let currentCategoryColor = $derived(entry.category_color);
 
   function handleTitleClick() {
     editedTitle = entry.title ?? "";
@@ -82,17 +82,16 @@
 
   function handleCategoryChange(categoryId: number | null) {
     updateEntryCategory(entry.id, categoryId);
-    // Update local state for immediate UI feedback
-    currentCategoryId = categoryId;
+    entry.category_id = categoryId;
     if (categoryId === null) {
-      currentCategoryName = undefined;
-      currentCategoryColor = undefined;
+      entry.category_name = undefined;
+      entry.category_color = undefined;
     } else {
       const categories = getAllCategories();
       const category = categories.find(c => c.id === categoryId);
       if (category) {
-        currentCategoryName = category.name;
-        currentCategoryColor = category.color;
+        entry.category_name = category.name;
+        entry.category_color = category.color;
       }
     }
   }

@@ -32,6 +32,7 @@
   <div class="input-row">
     <input
       type="text"
+      name="capture-text"
       class="capture-input"
       placeholder="What are you working on?"
       bind:value={text}

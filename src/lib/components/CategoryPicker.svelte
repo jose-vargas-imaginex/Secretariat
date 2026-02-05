@@ -9,7 +9,7 @@
   let { categories = [], selectedId = $bindable<number | null>(null) }: Props = $props();
 </script>
 
-<select class="category-picker" bind:value={selectedId}>
+<select class="category-picker" name="category" bind:value={selectedId}>
   <option value={null}>No category</option>
   {#each categories as category (category.id)}
     <option value={category.id}>

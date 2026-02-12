@@ -1,19 +1,19 @@
 <script lang="ts">
   import { createDailySummary } from "../services/summarization.js";
   import { GeminiError } from "../services/gemini.js";
-  import type { Entry } from "../services/db/types.js";
+  import type { Block } from "../services/db/types.js";
 
   interface Props {
     dailyNoteId: number;
-    hasUserEntries: boolean;
-    existingSummary: Entry | null;
+    hasUserBlocks: boolean;
+    existingSummary: Block | null;
     onSummaryCreated: () => void;
     onNavigateToSettings?: () => void;
   }
 
   let {
     dailyNoteId,
-    hasUserEntries,
+    hasUserBlocks,
     existingSummary,
     onSummaryCreated,
     onNavigateToSettings,
@@ -52,7 +52,7 @@
   }
 </script>
 
-{#if hasUserEntries}
+{#if hasUserBlocks}
   <div class="summarize-container">
     {#if state === "loading"}
       <button class="summarize-btn" disabled>

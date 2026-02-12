@@ -46,8 +46,8 @@ export function updateCategory(id: number, name: string, color: string, icon: st
 export function deleteCategory(id: number): void {
   const db = getDb();
 
-  // Set entries with this category to null
-  const updateStmt = db.prepare('UPDATE entries SET category_id = NULL WHERE category_id = ?');
+  // Set blocks with this category to null
+  const updateStmt = db.prepare('UPDATE blocks SET category_id = NULL WHERE category_id = ?');
   updateStmt.run([id]);
   updateStmt.free();
 

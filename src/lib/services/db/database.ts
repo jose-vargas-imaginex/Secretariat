@@ -61,12 +61,43 @@ export async function initDatabase(): Promise<Database> {
 async function runMigrations(): Promise<void> {
   if (!db) return;
 
-  // Check if title column exists in entries table
-  const tableInfo = db.exec("PRAGMA table_info(entries)");
-  const columns = tableInfo[0]?.values.map((row) => row[1]) ?? [];
+  // Migrate Entry ↔ Block naming swap: old "entries" table had daily_note_id (work items),
+  // old "blocks" table had parent_type/parent_id (content pieces).
+  // New naming: "blocks" = work items, "entries" = content pieces.
+  const oldEntriesInfo = db.exec("PRAGMA table_info(entries)");
+  const oldEntriesCols = oldEntriesInfo[0]?.values.map((row) => row[1]) ?? [];
 
-  if (!columns.includes("title")) {
-    db.run("ALTER TABLE entries ADD COLUMN title TEXT");
+  if (oldEntriesCols.includes("daily_note_id")) {
+    // Old schema detected — need to swap table names via temp
+    db.run("ALTER TABLE entries RENAME TO _old_entries");
+    db.run("ALTER TABLE blocks RENAME TO entries");
+    db.run("ALTER TABLE _old_entries RENAME TO blocks");
+
+    // Rename source_entry_ids column to source_block_ids
+    const blocksCols = db.exec("PRAGMA table_info(blocks)");
+    const blocksColNames = blocksCols[0]?.values.map((row) => row[1]) ?? [];
+    if (blocksColNames.includes("source_entry_ids")) {
+      db.run("ALTER TABLE blocks RENAME COLUMN source_entry_ids TO source_block_ids");
+    }
+
+    // Update parent_type values: 'entry' → 'block'
+    db.run("UPDATE entries SET parent_type = 'block' WHERE parent_type = 'entry'");
+
+    // Recreate indexes with new names
+    db.run("DROP INDEX IF EXISTS idx_entries_daily_note");
+    db.run("DROP INDEX IF EXISTS idx_blocks_parent");
+    db.run("CREATE INDEX IF NOT EXISTS idx_blocks_daily_note ON blocks(daily_note_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_entries_parent ON entries(parent_type, parent_id)");
+
+    await flushInMemoryDataToStorage();
+  }
+
+  // Check if title column exists in blocks table (previously entries)
+  const blocksInfo = db.exec("PRAGMA table_info(blocks)");
+  const blocksCols = blocksInfo[0]?.values.map((row) => row[1]) ?? [];
+
+  if (!blocksCols.includes("title")) {
+    db.run("ALTER TABLE blocks ADD COLUMN title TEXT");
     await flushInMemoryDataToStorage();
   }
 }

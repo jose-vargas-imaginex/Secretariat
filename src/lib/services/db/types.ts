@@ -23,20 +23,20 @@ export interface CategoryRow {
   position: number;
 }
 
-export interface Entry {
+export interface Block {
   id: number;
   daily_note_id: number;
   title: string | null;
   category_id: number | null;
   is_ai_generated: number;
-  source_entry_ids: string | null;
+  source_block_ids: string | null;
   created_at: string;
   updated_at: string;
   category_name?: string;
   category_color?: string;
 }
 
-export interface Block {
+export interface Entry {
   id: number;
   parent_type: string;
   parent_id: number;

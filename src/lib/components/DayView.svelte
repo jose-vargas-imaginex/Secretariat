@@ -1,10 +1,10 @@
 <script lang="ts">
   import { format, isToday } from "date-fns";
   import QuickCapture from "./QuickCapture.svelte";
-  import EntryList from "./EntryList.svelte";
+  import BlockList from "./BlockList.svelte";
   import SummarizeButton from "./SummarizeButton.svelte";
   import { getOrCreateDailyNote } from "../services/db/dailyNotes.js";
-  import { createEntry, getEntriesForDailyNote, getAiSummaryForDailyNote } from "../services/db/entries.js";
+  import { createBlock, getBlocksForDailyNote, getAiSummaryForDailyNote } from "../services/db/blocks.js";
   import { getAllCategories } from "../services/db/categories.js";
 
   interface Props {
@@ -20,17 +20,17 @@
 
   let dailyNote = $derived(getOrCreateDailyNote(date));
 
-  let entries = $derived.by(() => {
-    // Access refreshCounter to trigger re-computation when entries change
+  let blocks = $derived.by(() => {
+    // Access refreshCounter to trigger re-computation when blocks change
     refreshCounter;
     if (dailyNote) {
-      return getEntriesForDailyNote(dailyNote.id);
+      return getBlocksForDailyNote(dailyNote.id);
     }
     return [];
   });
 
-  let userEntries = $derived(entries.filter((e) => !e.is_ai_generated));
-  let hasUserEntries = $derived(userEntries.length > 0);
+  let userBlocks = $derived(blocks.filter((b) => !b.is_ai_generated));
+  let hasUserBlocks = $derived(userBlocks.length > 0);
   let existingSummary = $derived.by(() => {
     refreshCounter;
     if (dailyNote) {
@@ -48,7 +48,7 @@
   }) {
     if (!dailyNote) return;
 
-    createEntry(dailyNote.id, categoryId, text);
+    createBlock(dailyNote.id, categoryId, text);
     refreshCounter++;
   }
 
@@ -70,14 +70,14 @@
   {#if dailyNote}
     <SummarizeButton
       dailyNoteId={dailyNote.id}
-      {hasUserEntries}
+      {hasUserBlocks}
       {existingSummary}
       onSummaryCreated={() => refreshCounter++}
       {onNavigateToSettings}
     />
   {/if}
 
-  <EntryList {entries} onEntryDeleted={() => refreshCounter++} onCategoryChange={() => refreshCounter++} />
+  <BlockList {blocks} onBlockDeleted={() => refreshCounter++} onCategoryChange={() => refreshCounter++} />
 </div>
 
 <style>

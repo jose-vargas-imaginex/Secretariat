@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Block } from "../services/db/types.js";
+  import type { Entry } from "../services/db/types.js";
 
   interface TextContent {
     text?: string;
@@ -7,14 +7,14 @@
   }
 
   interface Props {
-    block: Block;
+    entry: Entry;
     onUpdate?: (content: TextContent) => void;
     onDelete?: () => void;
   }
 
-  let { block, onUpdate = () => {}, onDelete }: Props = $props();
+  let { entry, onUpdate = () => {}, onDelete }: Props = $props();
 
-  let content = $derived(block.content as TextContent);
+  let content = $derived(entry.content as TextContent);
 
   let editing = $state(false);
   let editText = $state("");
@@ -82,8 +82,8 @@
 </script>
 
 <div
-  class="text-block"
-  class:ai-authored={block.author === "ai"}
+  class="text-entry"
+  class:ai-authored={entry.author === "ai"}
   class:pending-delete={pendingDelete}
 >
   {#if pendingDelete}
@@ -102,8 +102,8 @@
       onkeydown={handleKeyDown}
     />
   {:else}
-    <div class="block-content">
-      <button type="button" class="block-text" onclick={startEdit}>
+    <div class="entry-content">
+      <button type="button" class="entry-text" onclick={startEdit}>
         {content.text || ""}
       </button>
       {#if onDelete}
@@ -111,7 +111,7 @@
           type="button"
           class="delete-button"
           onclick={startDelete}
-          aria-label="Delete block"
+          aria-label="Delete entry"
         >
           &times;
         </button>
@@ -121,27 +121,27 @@
 </div>
 
 <style>
-  .text-block {
+  .text-entry {
     padding: 0.25rem 0;
   }
 
-  .text-block.ai-authored {
+  .text-entry.ai-authored {
     border-left: 2px solid var(--accent-color);
     padding-left: 0.5rem;
     margin-left: -0.5rem;
   }
 
-  .text-block.pending-delete {
+  .text-entry.pending-delete {
     opacity: 0.6;
   }
 
-  .block-content {
+  .entry-content {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
-  .block-text {
+  .entry-text {
     display: block;
     flex: 1;
     margin: 0;
@@ -155,12 +155,12 @@
     min-height: 1.5em;
   }
 
-  .block-text:hover {
+  .entry-text:hover {
     background: var(--bg-hover);
     border-radius: 4px;
   }
 
-  .block-text:focus {
+  .entry-text:focus {
     outline: none;
   }
 
@@ -179,7 +179,7 @@
       background 0.15s ease;
   }
 
-  .block-content:hover .delete-button {
+  .entry-content:hover .delete-button {
     opacity: 1;
   }
 

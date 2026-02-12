@@ -1,26 +1,26 @@
 <script lang="ts">
-  import TextBlock from "./TextBlock.svelte";
+  import TextEntry from "./TextEntry.svelte";
   import CategoryChip from "./CategoryChip.svelte";
   import { format } from "date-fns";
   import {
-    getBlocksForParent,
-    createBlock,
-    updateBlock,
-    deleteBlock,
-  } from "../services/db/blocks.js";
-  import {
-    updateEntryTitle,
-    updateEntryCategory,
+    getEntriesForParent,
+    createEntry,
+    updateEntry,
+    deleteEntry,
   } from "../services/db/entries.js";
-  import type { Entry } from "../services/db/types.js";
+  import {
+    updateBlockTitle,
+    updateBlockCategory,
+  } from "../services/db/blocks.js";
+  import type { Block } from "../services/db/types.js";
 
   interface Props {
-    entry: Entry;
+    block: Block;
     onDelete?: () => void;
     onCategoryChange?: () => void;
   }
 
-  let { entry, onDelete, onCategoryChange }: Props = $props();
+  let { block, onDelete, onCategoryChange }: Props = $props();
 
   // Use an object for refresh key - new reference forces $derived to recalculate
   let refreshKey = $state({});
@@ -30,16 +30,16 @@
   let editedTitle = $state("");
 
   function handleTitleClick() {
-    editedTitle = entry.title ?? "";
+    editedTitle = block.title ?? "";
     isEditingTitle = true;
   }
 
   function handleTitleBlur() {
     isEditingTitle = false;
     const newTitle = editedTitle.trim() || null;
-    if (newTitle !== entry.title) {
-      updateEntryTitle(entry.id, newTitle);
-      entry.title = newTitle;
+    if (newTitle !== block.title) {
+      updateBlockTitle(block.id, newTitle);
+      block.title = newTitle;
     }
   }
 
@@ -48,7 +48,7 @@
       e.preventDefault();
       (e.target as HTMLInputElement).blur();
     } else if (e.key === "Escape") {
-      editedTitle = entry.title ?? "";
+      editedTitle = block.title ?? "";
       isEditingTitle = false;
     }
   }
@@ -57,37 +57,37 @@
     node.focus();
   }
 
-  let blocks = $derived.by(() => {
-    // Track both the refresh key and entry.id as dependencies
+  let entries = $derived.by(() => {
+    // Track both the refresh key and block.id as dependencies
     void refreshKey;
-    return getBlocksForParent("entry", entry.id);
+    return getEntriesForParent("block", block.id);
   });
 
-  function handleBlockUpdate(blockId: number, newContent: unknown) {
-    updateBlock(blockId, newContent);
+  function handleEntryUpdate(entryId: number, newContent: unknown) {
+    updateEntry(entryId, newContent);
     refreshKey = {}; // New object triggers re-derivation
   }
 
-  function handleBlockDelete(blockId: number) {
-    deleteBlock(blockId);
+  function handleEntryDelete(entryId: number) {
+    deleteEntry(entryId);
     refreshKey = {}; // New object triggers re-derivation
   }
 
-  function handleAddBlock() {
-    createBlock("entry", entry.id, "text", { text: "" });
+  function handleAddEntry() {
+    createEntry("block", block.id, "text", { text: "" });
     refreshKey = {};
   }
 
   function handleCategoryChange(categoryId: number | null) {
-    updateEntryCategory(entry.id, categoryId);
+    updateBlockCategory(block.id, categoryId);
     onCategoryChange?.();
   }
 </script>
 
-<article class="entry-card" class:ai-generated={entry.is_ai_generated}>
-  <div class="entry-header">
+<article class="block-card" class:ai-generated={block.is_ai_generated}>
+  <div class="block-header">
     <span class="timestamp">
-      {format(new Date(entry.created_at), "h:mm a")}
+      {format(new Date(block.created_at), "h:mm a")}
     </span>
     {#if isEditingTitle}
       <input
@@ -98,30 +98,30 @@
         onkeydown={handleTitleKeyDown}
         use:focusOnMount
       />
-    {:else if entry.title}
+    {:else if block.title}
       <button class="title" onclick={handleTitleClick}>
-        {entry.title}
+        {block.title}
       </button>
     {:else}
       <button class="title title-empty" onclick={handleTitleClick}>
         Add title...
       </button>
     {/if}
-    {#if !entry.is_ai_generated}
+    {#if !block.is_ai_generated}
       <CategoryChip
-        categoryId={entry.category_id}
-        categoryName={entry.category_name}
-        categoryColor={entry.category_color}
+        categoryId={block.category_id}
+        categoryName={block.category_name}
+        categoryColor={block.category_color}
         onCategoryChange={handleCategoryChange}
       />
     {/if}
-    {#if entry.is_ai_generated}
+    {#if block.is_ai_generated}
       <span class="ai-badge"
-        >{entry.title === "Daily Summary" ? "AI Summary" : "AI"}</span
+        >{block.title === "Daily Summary" ? "AI Summary" : "AI"}</span
       >
     {/if}
     {#if onDelete}
-      <button class="delete-btn" onclick={onDelete} aria-label="Delete entry">
+      <button class="delete-btn" onclick={onDelete} aria-label="Delete block">
         <svg
           width="14"
           height="14"
@@ -143,32 +143,32 @@
     {/if}
   </div>
 
-  <div class="entry-content">
-    {#each blocks as block (block.id)}
-      {#if block.type === "category-heading"}
+  <div class="block-content">
+    {#each entries as entry (entry.id)}
+      {#if entry.type === "category-heading"}
         <div class="category-heading">
           <span
             class="category-pill"
-            style="background-color: {block.content.color}20; color: {block.content.color}"
+            style="background-color: {entry.content.color}20; color: {entry.content.color}"
           >
-            {block.content.name}
+            {entry.content.name}
           </span>
         </div>
-      {:else if block.type === "text"}
-        <TextBlock
-          {block}
-          onUpdate={(content) => handleBlockUpdate(block.id, content)}
-          onDelete={() => handleBlockDelete(block.id)}
+      {:else if entry.type === "text"}
+        <TextEntry
+          {entry}
+          onUpdate={(content) => handleEntryUpdate(entry.id, content)}
+          onDelete={() => handleEntryDelete(entry.id)}
         />
       {/if}
     {/each}
 
-    {#if blocks.length === 0}
-      <button class="empty-placeholder" onclick={handleAddBlock}>
+    {#if entries.length === 0}
+      <button class="empty-placeholder" onclick={handleAddEntry}>
         Click to add content
       </button>
     {:else}
-      <button class="add-block-btn" onclick={handleAddBlock}>
+      <button class="add-entry-btn" onclick={handleAddEntry}>
         <svg
           width="12"
           height="12"
@@ -182,14 +182,14 @@
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        Add block
+        Add entry
       </button>
     {/if}
   </div>
 </article>
 
 <style>
-  .entry-card {
+  .block-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -197,7 +197,7 @@
     margin-bottom: 0.75rem;
   }
 
-  .entry-card.ai-generated {
+  .block-card.ai-generated {
     border-left: 3px solid var(--accent-color);
     background: linear-gradient(
       135deg,
@@ -206,7 +206,7 @@
     );
   }
 
-  .entry-header {
+  .block-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -285,7 +285,7 @@
       background-color 0.15s;
   }
 
-  .entry-card:hover .delete-btn {
+  .block-card:hover .delete-btn {
     opacity: 1;
   }
 
@@ -294,7 +294,7 @@
     background-color: rgba(239, 68, 68, 0.1);
   }
 
-  .entry-content {
+  .block-content {
     font-size: 0.875rem;
   }
 
@@ -320,7 +320,7 @@
     color: var(--accent-color);
   }
 
-  .add-block-btn {
+  .add-entry-btn {
     display: flex;
     align-items: center;
     gap: 0.375rem;
@@ -339,11 +339,11 @@
       background-color 0.15s;
   }
 
-  .entry-card:hover .add-block-btn {
+  .block-card:hover .add-entry-btn {
     opacity: 1;
   }
 
-  .add-block-btn:hover {
+  .add-entry-btn:hover {
     color: var(--accent-color);
     background-color: var(--bg-hover);
   }

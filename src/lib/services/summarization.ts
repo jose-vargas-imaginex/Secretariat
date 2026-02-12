@@ -1,7 +1,7 @@
-import { getEntriesForDailyNote, createAiEntry, getAiSummaryForDailyNote, deleteEntry } from './db/entries.js';
-import { getBlocksForParent, createBlock } from './db/blocks.js';
+import { getBlocksForDailyNote, createAiBlock, getAiSummaryForDailyNote, deleteBlock } from './db/blocks.js';
+import { getEntriesForParent, createEntry } from './db/entries.js';
 import { generateContent, GeminiError } from './gemini.js';
-import type { Entry, Block } from './db/types.js';
+import type { Block, Entry } from './db/types.js';
 
 interface SummaryCategory {
   name: string;
@@ -13,36 +13,36 @@ interface SummaryResponse {
   categories: SummaryCategory[];
 }
 
-function buildPrompt(entries: Entry[], blocksByEntry: Map<number, Block[]>): string {
-  const grouped = new Map<string, { color: string; entries: { title: string | null; blocks: string[] }[] }>();
+function buildPrompt(blocks: Block[], entriesByBlock: Map<number, Entry[]>): string {
+  const grouped = new Map<string, { color: string; blocks: { title: string | null; entries: string[] }[] }>();
 
-  for (const entry of entries) {
-    const categoryName = entry.category_name ?? 'Uncategorized';
-    const categoryColor = entry.category_color ?? '#6b7280';
+  for (const block of blocks) {
+    const categoryName = block.category_name ?? 'Uncategorized';
+    const categoryColor = block.category_color ?? '#6b7280';
 
     if (!grouped.has(categoryName)) {
-      grouped.set(categoryName, { color: categoryColor, entries: [] });
+      grouped.set(categoryName, { color: categoryColor, blocks: [] });
     }
 
-    const blocks = blocksByEntry.get(entry.id) ?? [];
-    const blockTexts = blocks
-      .filter((b) => b.type === 'text')
-      .map((b) => (b.content as { text?: string })?.text ?? '')
+    const entries = entriesByBlock.get(block.id) ?? [];
+    const entryTexts = entries
+      .filter((e) => e.type === 'text')
+      .map((e) => (e.content as { text?: string })?.text ?? '')
       .filter((t) => t.trim().length > 0);
 
-    grouped.get(categoryName)!.entries.push({
-      title: entry.title,
-      blocks: blockTexts,
+    grouped.get(categoryName)!.blocks.push({
+      title: block.title,
+      entries: entryTexts,
     });
   }
 
-  let entriesText = '';
+  let blocksText = '';
   for (const [category, data] of grouped) {
-    entriesText += `\n## ${category} (color: ${data.color})\n`;
-    for (const e of data.entries) {
-      if (e.title) entriesText += `- **${e.title}**\n`;
-      for (const text of e.blocks) {
-        entriesText += `  ${text}\n`;
+    blocksText += `\n## ${category} (color: ${data.color})\n`;
+    for (const b of data.blocks) {
+      if (b.title) blocksText += `- **${b.title}**\n`;
+      for (const text of b.entries) {
+        blocksText += `  ${text}\n`;
       }
     }
   }
@@ -68,7 +68,7 @@ Rules:
 - Maximum 3-4 highlights per category
 
 Here are today's entries:
-${entriesText}`;
+${blocksText}`;
 }
 
 function parseSummaryResponse(text: string): SummaryResponse {
@@ -87,12 +87,12 @@ function parseSummaryResponse(text: string): SummaryResponse {
   return parsed;
 }
 
-export function getExistingSummary(dailyNoteId: number): Entry | null {
+export function getExistingSummary(dailyNoteId: number): Block | null {
   return getAiSummaryForDailyNote(dailyNoteId);
 }
 
-export function deleteSummary(entryId: number): void {
-  deleteEntry(entryId);
+export function deleteSummary(blockId: number): void {
+  deleteBlock(blockId);
 }
 
 export async function createDailySummary(dailyNoteId: number): Promise<number> {
@@ -102,22 +102,22 @@ export async function createDailySummary(dailyNoteId: number): Promise<number> {
     deleteSummary(existing.id);
   }
 
-  // Fetch user entries (exclude AI-generated)
-  const allEntries = getEntriesForDailyNote(dailyNoteId);
-  const userEntries = allEntries.filter((e) => !e.is_ai_generated);
+  // Fetch user blocks (exclude AI-generated)
+  const allBlocks = getBlocksForDailyNote(dailyNoteId);
+  const userBlocks = allBlocks.filter((b) => !b.is_ai_generated);
 
-  if (userEntries.length === 0) {
-    throw new Error('No entries to summarize');
+  if (userBlocks.length === 0) {
+    throw new Error('No blocks to summarize');
   }
 
-  // Fetch blocks for each entry
-  const blocksByEntry = new Map<number, Block[]>();
-  for (const entry of userEntries) {
-    blocksByEntry.set(entry.id, getBlocksForParent('entry', entry.id));
+  // Fetch entries for each block
+  const entriesByBlock = new Map<number, Entry[]>();
+  for (const block of userBlocks) {
+    entriesByBlock.set(block.id, getEntriesForParent('block', block.id));
   }
 
   // Build prompt and call Gemini
-  const prompt = buildPrompt(userEntries, blocksByEntry);
+  const prompt = buildPrompt(userBlocks, entriesByBlock);
   let responseText: string;
   try {
     responseText = await generateContent(prompt);
@@ -134,20 +134,20 @@ export async function createDailySummary(dailyNoteId: number): Promise<number> {
     throw new GeminiError('INVALID_RESPONSE', 'Unexpected response format from AI. Please try again.');
   }
 
-  // Create AI entry
-  const entryIds = userEntries.map((e) => e.id);
-  const aiEntryId = createAiEntry(dailyNoteId, 'Daily Summary', entryIds);
+  // Create AI block
+  const blockIds = userBlocks.map((b) => b.id);
+  const aiBlockId = createAiBlock(dailyNoteId, 'Daily Summary', blockIds);
 
-  // Create blocks for each category
+  // Create entries for each category
   for (const cat of summary.categories) {
-    // Category heading block
-    createBlock('entry', aiEntryId, 'category-heading', { name: cat.name, color: cat.color }, 'ai');
+    // Category heading entry
+    createEntry('block', aiBlockId, 'category-heading', { name: cat.name, color: cat.color }, 'ai');
 
-    // Highlight blocks
+    // Highlight entries
     for (const highlight of cat.highlights) {
-      createBlock('entry', aiEntryId, 'text', { text: `• ${highlight}` }, 'ai');
+      createEntry('block', aiBlockId, 'text', { text: `• ${highlight}` }, 'ai');
     }
   }
 
-  return aiEntryId;
+  return aiBlockId;
 }

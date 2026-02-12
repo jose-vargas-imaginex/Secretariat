@@ -99,7 +99,7 @@
 
   <section class="settings-section">
     <h2>Categories</h2>
-    <p class="section-desc">Manage categories for organizing your entries.</p>
+    <p class="section-desc">Manage categories for organizing your blocks.</p>
 
     <div class="category-list">
       {#each categories as cat (cat.id)}

@@ -34,7 +34,7 @@
 
   <div class="sidebar-section">
     <h2>Calendar</h2>
-    <Calendar bind:selectedDate {datesWithNotes} />
+    <Calendar bind:selectedDate {datesWithNotes} onDateSelect={() => onViewChange('day')} />
   </div>
 
   <div class="sidebar-section">

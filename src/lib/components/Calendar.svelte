@@ -15,9 +15,10 @@
   interface Props {
     selectedDate?: Date;
     datesWithNotes?: string[];
+    onDateSelect?: (date: Date) => void;
   }
 
-  let { selectedDate = $bindable(new Date()), datesWithNotes = [] }: Props = $props();
+  let { selectedDate = $bindable(new Date()), datesWithNotes = [], onDateSelect }: Props = $props();
 
   let viewDate = $state(new Date());
 
@@ -45,6 +46,7 @@
 
   function selectDay(date: Date) {
     selectedDate = date;
+    onDateSelect?.(date);
   }
 </script>
 

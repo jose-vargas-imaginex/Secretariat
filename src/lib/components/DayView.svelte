@@ -3,7 +3,7 @@
   import QuickCapture from "./QuickCapture.svelte";
   import BlockList from "./BlockList.svelte";
   import SummarizeButton from "./SummarizeButton.svelte";
-  import { getOrCreateDailyNote } from "../services/db/dailyNotes.js";
+  import { getDailyNote, getOrCreateDailyNote } from "../services/db/dailyNotes.js";
   import { createBlock, getBlocksForDailyNote, getAiSummaryForDailyNote } from "../services/db/blocks.js";
   import { getAllCategories } from "../services/db/categories.js";
 
@@ -18,7 +18,10 @@
 
   let categories = $derived(getAllCategories());
 
-  let dailyNote = $derived(getOrCreateDailyNote(date));
+  let dailyNote = $derived.by(() => {
+    refreshCounter;
+    return getDailyNote(date);
+  });
 
   let blocks = $derived.by(() => {
     // Access refreshCounter to trigger re-computation when blocks change
@@ -46,9 +49,8 @@
     text: string;
     categoryId: number | null;
   }) {
-    if (!dailyNote) return;
-
-    createBlock(dailyNote.id, categoryId, text);
+    const note = dailyNote ?? getOrCreateDailyNote(date);
+    createBlock(note.id, categoryId, text);
     refreshCounter++;
   }
 

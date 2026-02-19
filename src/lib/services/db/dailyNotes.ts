@@ -68,7 +68,11 @@ export function getDatesWithNotes(startDate: Date, endDate: Date): string[] {
   const startStr = format(startDate, 'yyyy-MM-dd');
   const endStr = format(endDate, 'yyyy-MM-dd');
 
-  const stmt = db.prepare('SELECT date FROM daily_notes WHERE date >= ? AND date <= ?');
+  const stmt = db.prepare(
+    `SELECT DISTINCT dn.date FROM daily_notes dn
+     INNER JOIN blocks b ON b.daily_note_id = dn.id
+     WHERE dn.date >= ? AND dn.date <= ?`
+  );
   stmt.bind([startStr, endStr]);
 
   const dates: string[] = [];

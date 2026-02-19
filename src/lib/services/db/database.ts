@@ -124,3 +124,54 @@ export function getDb(): Database {
   if (!db) throw new Error('Database not initialized');
   return db;
 }
+
+export function exportDatabase(): Uint8Array {
+  const database = getDb();
+  return database.export();
+}
+
+export async function importDatabase(data: Uint8Array): Promise<void> {
+  const SQL = await initSqlJs({
+    locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+  });
+
+  // Validate the imported data by opening it and checking for expected tables
+  const testDb = new SQL.Database(data);
+  const requiredTables = ['blocks', 'entries', 'daily_notes', 'categories', 'settings'];
+
+  try {
+    const result = testDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
+    const tableNames = result[0]?.values.map((row) => row[0] as string) ?? [];
+
+    for (const table of requiredTables) {
+      if (!tableNames.includes(table)) {
+        throw new Error(`Invalid database: missing table "${table}"`);
+      }
+    }
+  } catch (e) {
+    testDb.close();
+    throw e;
+  }
+
+  // Valid — replace current DB
+  testDb.close();
+  if (db) {
+    db.close();
+  }
+  db = new SQL.Database(data);
+  await flushInMemoryDataToStorage();
+}
+
+export async function resetDatabase(): Promise<void> {
+  if (db) {
+    db.close();
+  }
+
+  const SQL = await initSqlJs({
+    locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+  });
+
+  db = new SQL.Database();
+  db.run(SCHEMA);
+  await seedDefaultCategories();
+}

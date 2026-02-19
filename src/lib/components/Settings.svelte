@@ -6,6 +6,11 @@
     deleteCategory,
   } from "../services/db/categories.js";
   import type { Category } from "../services/db/types.js";
+  import {
+    exportDatabase,
+    importDatabase,
+    resetDatabase,
+  } from "../services/db/database.js";
 
   type TestStatus = "saved" | "testing" | "success" | "error" | null;
 
@@ -16,6 +21,11 @@
 
   let newCategoryName = $state("");
   let newCategoryColor = $state("#6b7280");
+
+  let importStatus = $state<'success' | 'error' | null>(null);
+  let importError = $state('');
+  let showResetConfirm = $state(false);
+  let resetConfirmText = $state('');
 
   $effect(() => {
     geminiKey = getSetting("gemini_api_key") || "";
@@ -56,6 +66,44 @@
   function removeCategory(id: number) {
     deleteCategory(id);
     categories = getAllCategories();
+  }
+
+  function handleExport() {
+    const data = exportDatabase();
+    const blob = new Blob([data], { type: 'application/x-sqlite3' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `secretariat-backup-${date}.db`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImport(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const data = new Uint8Array(buffer);
+      await importDatabase(data);
+      importStatus = 'success';
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      importStatus = 'error';
+      importError = e instanceof Error ? e.message : 'Invalid database file';
+      setTimeout(() => { importStatus = null; importError = ''; }, 3000);
+    }
+
+    // Reset the input so the same file can be re-selected
+    input.value = '';
+  }
+
+  async function handleReset() {
+    await resetDatabase();
+    window.location.reload();
   }
 </script>
 
@@ -127,6 +175,68 @@
       />
       <input type="color" class="color-input" bind:value={newCategoryColor} />
       <button class="btn primary" onclick={addCategory}>Add</button>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h2>Data Management</h2>
+    <p class="section-desc">Export, import, or reset your database.</p>
+
+    <div class="data-actions">
+      <button class="btn secondary" onclick={handleExport}>
+        Export Database
+      </button>
+      <label class="btn secondary import-label">
+        Import Database
+        <input
+          type="file"
+          accept=".db,.sqlite"
+          onchange={handleImport}
+          hidden
+        />
+      </label>
+    </div>
+
+    {#if importStatus === 'success'}
+      <p class="status success">Database imported successfully. Reloading...</p>
+    {:else if importStatus === 'error'}
+      <p class="status error">{importError}</p>
+    {/if}
+
+    <div class="reset-section">
+      <button class="btn danger" onclick={() => (showResetConfirm = true)}>
+        Reset Database
+      </button>
+
+      {#if showResetConfirm}
+        <div class="reset-confirm">
+          <p class="reset-warning">
+            This will permanently delete all your data and reset the database to its default state. This action cannot be undone.
+          </p>
+          <p class="reset-prompt">Type <strong>DELETE</strong> to confirm:</p>
+          <input
+            type="text"
+            class="reset-input"
+            bind:value={resetConfirmText}
+            placeholder="Type DELETE"
+          />
+          <div class="reset-actions">
+            <button
+              class="btn danger"
+              disabled={resetConfirmText !== 'DELETE'}
+              onclick={handleReset}
+            >
+              Confirm Reset
+            </button>
+            <button
+              class="btn secondary"
+              onclick={() => { showResetConfirm = false; resetConfirmText = ''; }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      {/if}
     </div>
   </section>
 </div>
@@ -295,5 +405,68 @@
     border: 1px solid var(--border-color);
     border-radius: 6px;
     cursor: pointer;
+  }
+
+  .data-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .import-label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .btn.danger {
+    background: #dc2626;
+    color: white;
+  }
+
+  .btn.danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .reset-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+
+  .reset-confirm {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(220, 38, 38, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    border-radius: 6px;
+  }
+
+  .reset-warning {
+    font-size: 0.875rem;
+    color: #dc2626;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .reset-prompt {
+    font-size: 0.875rem;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .reset-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .reset-actions {
+    display: flex;
+    gap: 0.5rem;
   }
 </style>

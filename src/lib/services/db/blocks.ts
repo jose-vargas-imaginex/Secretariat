@@ -122,3 +122,31 @@ export function deleteBlock(blockId: number): void {
 
   flushInMemoryDataToStorage();
 }
+
+export function getBlocksInDateRange(startDate: string, endDate: string): Block[] {
+  const db = getDb();
+
+  const stmt = db.prepare(`
+    SELECT b.*, c.name as category_name, c.color as category_color
+    FROM blocks b
+    LEFT JOIN categories c ON b.category_id = c.id
+    JOIN daily_notes dn ON b.daily_note_id = dn.id
+    WHERE dn.date >= ? AND dn.date <= ?
+      AND b.is_ai_generated = 0
+    ORDER BY dn.date ASC, b.created_at ASC
+  `);
+  stmt.bind([startDate, endDate]);
+
+  const blocks: Block[] = [];
+  const columns = stmt.getColumnNames();
+
+  while (stmt.step()) {
+    const row = stmt.get();
+    const block: Record<string, unknown> = {};
+    columns.forEach((col, i) => block[col] = row[i]);
+    blocks.push(block as unknown as Block);
+  }
+  stmt.free();
+
+  return blocks;
+}

@@ -39,7 +39,9 @@
 
   <div class="sidebar-section">
     <h2>Sections</h2>
-    <p class="placeholder">Sections coming soon</p>
+    <button class="nav-item section-link" onclick={() => onViewChange('blockers')}>
+      Current Blockers
+    </button>
   </div>
 
   <div class="sidebar-footer">
@@ -107,10 +109,8 @@
     letter-spacing: 0.05em;
   }
 
-  .placeholder {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin: 0;
+  .section-link {
+    font-size: 0.8125rem;
   }
 
   .sidebar-footer {

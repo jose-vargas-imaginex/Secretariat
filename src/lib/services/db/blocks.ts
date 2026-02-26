@@ -123,6 +123,26 @@ export function deleteBlock(blockId: number): void {
   flushInMemoryDataToStorage();
 }
 
+export function getDistinctBlockDates(): string[] {
+  const db = getDb();
+
+  const stmt = db.prepare(`
+    SELECT DISTINCT dn.date
+    FROM daily_notes dn
+    JOIN blocks b ON b.daily_note_id = dn.id
+    WHERE b.is_ai_generated = 0
+    ORDER BY dn.date DESC
+  `);
+
+  const dates: string[] = [];
+  while (stmt.step()) {
+    dates.push(stmt.get()[0] as string);
+  }
+  stmt.free();
+
+  return dates;
+}
+
 export function getBlocksInDateRange(startDate: string, endDate: string): Block[] {
   const db = getDb();
 

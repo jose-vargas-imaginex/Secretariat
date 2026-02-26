@@ -5,6 +5,7 @@
     formatWeekRange,
     getWeeklySummaries,
     getWeeklySummary,
+    getWeeksWithBlocks,
     generateWeeklySummary,
     type SummaryVerbosity,
   } from "../services/weeklySummarization.js";
@@ -54,6 +55,18 @@
         options.push({
           weekKey: s.weekKey,
           label: formatWeekRange(s.weekKey),
+        });
+      }
+    }
+
+    // Add past weeks that have blocks
+    const weeksWithData = getWeeksWithBlocks();
+    for (const weekKey of weeksWithData) {
+      if (!seen[weekKey]) {
+        seen[weekKey] = true;
+        options.push({
+          weekKey,
+          label: formatWeekRange(weekKey),
         });
       }
     }

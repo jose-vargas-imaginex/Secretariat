@@ -1,4 +1,4 @@
-import { getBlocksInDateRange } from './db/blocks.js';
+import { getBlocksInDateRange, getDistinctBlockDates } from './db/blocks.js';
 import { getEntriesForParent } from './db/entries.js';
 import {
   getOrCreateSection,
@@ -41,6 +41,15 @@ export function formatWeekRange(weekKey: string): string {
   const monday = parseISO(weekKey);
   const sunday = endOfISOWeek(monday);
   return `${format(monday, 'MMM d')} – ${format(sunday, 'MMM d, yyyy')}`;
+}
+
+export function getWeeksWithBlocks(): string[] {
+  const dates = getDistinctBlockDates();
+  const weekKeys = new Set<string>();
+  for (const date of dates) {
+    weekKeys.add(getWeekKey(parseISO(date)));
+  }
+  return Array.from(weekKeys);
 }
 
 export function getWeeklySummaries(): WeeklySummaryInfo[] {

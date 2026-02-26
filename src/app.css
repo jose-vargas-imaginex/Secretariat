@@ -19,8 +19,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode: system preference (when not explicitly set to light) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg-primary: #1a1a2e;
     --bg-secondary: #16213e;
     --bg-hover: #1f2b47;
@@ -30,6 +31,18 @@
     --border-color: #2d3748;
     --accent-color: #667eea;
   }
+}
+
+/* Dark mode: explicit override */
+:root[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-hover: #1f2b47;
+  --bg-active: #253554;
+  --text-primary: #f8f8f2;
+  --text-secondary: #a0a0a0;
+  --border-color: #2d3748;
+  --accent-color: #667eea;
 }
 
 * {

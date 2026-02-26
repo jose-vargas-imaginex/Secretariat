@@ -11,6 +11,7 @@
     importDatabase,
     resetDatabase,
   } from "../services/db/database.js";
+  import { applyTheme } from "../services/theme.js";
 
   type TestStatus = "saved" | "testing" | "success" | "error" | null;
 
@@ -26,11 +27,19 @@
   let importError = $state('');
   let showResetConfirm = $state(false);
   let resetConfirmText = $state('');
+  let themePreference = $state<string>("system");
 
   $effect(() => {
     geminiKey = getSetting("gemini_api_key") || "";
+    themePreference = getSetting("theme_preference") || "system";
     categories = getAllCategories();
   });
+
+  function handleThemeChange(value: string) {
+    themePreference = value;
+    setSetting("theme_preference", value);
+    applyTheme(value);
+  }
 
   function saveApiKey() {
     setSetting("gemini_api_key", geminiKey);
@@ -109,6 +118,53 @@
 
 <div class="settings">
   <h1>Settings</h1>
+
+  <section class="settings-section">
+    <h2>Appearance</h2>
+    <p class="section-desc">Choose how the app looks.</p>
+
+    <div class="theme-options">
+      <label class="theme-option">
+        <input
+          type="radio"
+          name="theme"
+          value="system"
+          checked={themePreference === "system"}
+          onchange={() => handleThemeChange("system")}
+        />
+        <span class="theme-option-text">
+          <span class="theme-option-label">System</span>
+          <span class="theme-option-desc">Follow your OS setting</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input
+          type="radio"
+          name="theme"
+          value="light"
+          checked={themePreference === "light"}
+          onchange={() => handleThemeChange("light")}
+        />
+        <span class="theme-option-text">
+          <span class="theme-option-label">Light</span>
+          <span class="theme-option-desc">Always use light mode</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input
+          type="radio"
+          name="theme"
+          value="dark"
+          checked={themePreference === "dark"}
+          onchange={() => handleThemeChange("dark")}
+        />
+        <span class="theme-option-text">
+          <span class="theme-option-label">Dark</span>
+          <span class="theme-option-desc">Always use dark mode</span>
+        </span>
+      </label>
+    </div>
+  </section>
 
   <section class="settings-section">
     <h2>Gemini API Key</h2>
@@ -468,5 +524,44 @@
   .reset-actions {
     display: flex;
     gap: 0.5rem;
+  }
+
+  .theme-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .theme-option:hover {
+    background: var(--bg-hover);
+  }
+
+  .theme-option input[type="radio"] {
+    accent-color: var(--accent-color);
+  }
+
+  .theme-option-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .theme-option-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .theme-option-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
   }
 </style>

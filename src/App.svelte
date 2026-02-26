@@ -6,6 +6,8 @@
   import WeeklySummariesView from "./lib/components/WeeklySummariesView.svelte";
   import { onMount } from "svelte";
   import { initDatabase } from "./lib/services/db/database.js";
+  import { getSetting } from "./lib/services/db/settings.js";
+  import { applyTheme } from "./lib/services/theme.js";
 
   let dbReady = $state(false);
   let error = $state<string | null>(null);
@@ -15,6 +17,8 @@
   onMount(async () => {
     try {
       await initDatabase();
+      const theme = getSetting("theme_preference") || "system";
+      applyTheme(theme);
       dbReady = true;
     } catch (e) {
       error = (e as Error).message;

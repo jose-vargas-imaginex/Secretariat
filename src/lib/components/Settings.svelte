@@ -11,7 +11,8 @@
     importDatabase,
     resetDatabase,
   } from "../services/db/database.js";
-  import { applyTheme } from "../services/theme.js";
+  import { applyTheme, applyPalette, getPaletteById, PRESET_PALETTES } from "../services/theme.js";
+  import type { ColorPalette } from "../services/theme.js";
 
   type TestStatus = "saved" | "testing" | "success" | "error" | null;
 
@@ -28,10 +29,21 @@
   let showResetConfirm = $state(false);
   let resetConfirmText = $state('');
   let themePreference = $state<string>("system");
+  let activePaletteId = $state("default");
+  let customPalettes = $state<ColorPalette[]>([]);
+  let showCreatePalette = $state(false);
+  let editingPaletteId = $state<string | null>(null);
+  let newPaletteName = $state("");
+  let newPaletteAccent = $state("#667eea");
+  let newPaletteBg = $state("#ffffff");
+  let newPaletteText = $state("#1f2937");
 
   $effect(() => {
     geminiKey = getSetting("gemini_api_key") || "";
     themePreference = getSetting("theme_preference") || "system";
+    activePaletteId = getSetting("active_palette") || "default";
+    const customPalettesJson = getSetting("custom_palettes");
+    customPalettes = customPalettesJson ? JSON.parse(customPalettesJson) : [];
     categories = getAllCategories();
   });
 
@@ -39,6 +51,70 @@
     themePreference = value;
     setSetting("theme_preference", value);
     applyTheme(value);
+  }
+
+  function handlePaletteSelect(id: string) {
+    activePaletteId = id;
+    setSetting("active_palette", id);
+    const palette = getPaletteById(id, customPalettes);
+    applyPalette(palette);
+  }
+
+  function saveCustomPalette() {
+    if (!newPaletteName.trim()) return;
+
+    if (editingPaletteId) {
+      customPalettes = customPalettes.map(p =>
+        p.id === editingPaletteId
+          ? { ...p, name: newPaletteName.trim(), accent: newPaletteAccent, bgPrimary: newPaletteBg, textPrimary: newPaletteText }
+          : p
+      );
+    } else {
+      const palette: ColorPalette = {
+        id: `custom-${Date.now()}`,
+        name: newPaletteName.trim(),
+        isPreset: false,
+        accent: newPaletteAccent,
+        bgPrimary: newPaletteBg,
+        textPrimary: newPaletteText,
+      };
+      customPalettes = [...customPalettes, palette];
+    }
+
+    setSetting("custom_palettes", JSON.stringify(customPalettes));
+
+    if (editingPaletteId && editingPaletteId === activePaletteId) {
+      const palette = getPaletteById(activePaletteId, customPalettes);
+      applyPalette(palette);
+    }
+
+    resetPaletteForm();
+  }
+
+  function editCustomPalette(palette: ColorPalette) {
+    editingPaletteId = palette.id;
+    newPaletteName = palette.name;
+    newPaletteAccent = palette.accent;
+    newPaletteBg = palette.bgPrimary;
+    newPaletteText = palette.textPrimary;
+    showCreatePalette = true;
+  }
+
+  function deleteCustomPalette(id: string) {
+    customPalettes = customPalettes.filter(p => p.id !== id);
+    setSetting("custom_palettes", JSON.stringify(customPalettes));
+    if (activePaletteId === id) {
+      handlePaletteSelect("default");
+    }
+  }
+
+  function resetPaletteForm() {
+    showCreatePalette = false;
+    editingPaletteId = null;
+    newPaletteName = "";
+    newPaletteAccent = "#667eea";
+    newPaletteBg = "#ffffff";
+    newPaletteText = "#1f2937";
   }
 
   function saveApiKey() {
@@ -163,6 +239,86 @@
           <span class="theme-option-desc">Always use dark mode</span>
         </span>
       </label>
+    </div>
+
+    <div class="palette-section">
+      <h3>Color Palette</h3>
+      <p class="palette-desc">Choose a color palette or create your own.</p>
+
+      <div class="palette-grid">
+        {#each PRESET_PALETTES as palette (palette.id)}
+          <button
+            class="palette-card"
+            class:active={activePaletteId === palette.id}
+            onclick={() => handlePaletteSelect(palette.id)}
+          >
+            <div class="palette-swatches">
+              <span class="swatch" style="background-color: {palette.accent}"></span>
+              <span class="swatch" style="background-color: {palette.bgPrimary || '#ffffff'}"></span>
+              <span class="swatch" style="background-color: {palette.textPrimary || '#1f2937'}"></span>
+            </div>
+            <span class="palette-name">{palette.name}</span>
+          </button>
+        {/each}
+
+        {#each customPalettes as palette (palette.id)}
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="palette-card custom"
+            class:active={activePaletteId === palette.id}
+            onclick={() => handlePaletteSelect(palette.id)}
+            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handlePaletteSelect(palette.id); }}
+            role="button"
+            tabindex="0"
+          >
+            <div class="palette-swatches">
+              <span class="swatch" style="background-color: {palette.accent}"></span>
+              <span class="swatch" style="background-color: {palette.bgPrimary}"></span>
+              <span class="swatch" style="background-color: {palette.textPrimary}"></span>
+            </div>
+            <span class="palette-name">{palette.name}</span>
+            <div class="palette-actions">
+              <button class="palette-action-btn" onclick={(e) => { e.stopPropagation(); editCustomPalette(palette); }}>Edit</button>
+              <button class="palette-action-btn danger" onclick={(e) => { e.stopPropagation(); deleteCustomPalette(palette.id); }}>Delete</button>
+            </div>
+          </div>
+        {/each}
+      </div>
+
+      {#if !showCreatePalette}
+        <button class="btn secondary" onclick={() => (showCreatePalette = true)}>
+          Create Custom Palette
+        </button>
+      {:else}
+        <div class="create-palette-form">
+          <input
+            type="text"
+            class="palette-name-input"
+            bind:value={newPaletteName}
+            placeholder="Palette name"
+          />
+          <div class="color-pickers">
+            <label class="color-picker-group">
+              <span>Accent</span>
+              <input type="color" bind:value={newPaletteAccent} />
+            </label>
+            <label class="color-picker-group">
+              <span>Background</span>
+              <input type="color" bind:value={newPaletteBg} />
+            </label>
+            <label class="color-picker-group">
+              <span>Text</span>
+              <input type="color" bind:value={newPaletteText} />
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" onclick={saveCustomPalette} disabled={!newPaletteName.trim()}>
+              {editingPaletteId ? 'Update' : 'Save'}
+            </button>
+            <button class="btn secondary" onclick={resetPaletteForm}>Cancel</button>
+          </div>
+        </div>
+      {/if}
     </div>
   </section>
 
@@ -563,5 +719,143 @@
   .theme-option-desc {
     font-size: 0.75rem;
     color: var(--text-secondary);
+  }
+
+  .palette-section {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .palette-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .palette-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.75rem 0;
+  }
+
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .palette-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.625rem;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .palette-card:hover {
+    border-color: var(--accent-color);
+  }
+
+  .palette-card.active {
+    border-color: var(--accent-color);
+    background: var(--bg-active);
+  }
+
+  .palette-swatches {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+  }
+
+  .palette-name {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .palette-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.125rem;
+  }
+
+  .palette-action-btn {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.375rem;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .palette-action-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+  }
+
+  .palette-action-btn.danger:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  .create-palette-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+
+  .palette-name-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+  }
+
+  .color-pickers {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .color-picker-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .color-picker-group input[type="color"] {
+    width: 40px;
+    height: 32px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.5rem;
   }
 </style>

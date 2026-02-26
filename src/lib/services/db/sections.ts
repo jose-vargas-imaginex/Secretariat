@@ -58,6 +58,27 @@ export function getOrCreateSection(title: string): Section {
   };
 }
 
+export function getSectionsByPrefix(prefix: string): Section[] {
+  const db = getDb();
+  const stmt = db.prepare('SELECT * FROM sections WHERE title LIKE ? ORDER BY title DESC');
+  stmt.bind([prefix + '%']);
+
+  const sections: Section[] = [];
+  while (stmt.step()) {
+    const row = stmt.get();
+    sections.push({
+      id: row[0] as number,
+      title: row[1] as string,
+      position: row[2] as number,
+      last_ai_update: row[3] as string | null,
+      created_at: row[4] as string,
+      updated_at: row[5] as string,
+    });
+  }
+  stmt.free();
+  return sections;
+}
+
 export function getSection(title: string): Section | null {
   const db = getDb();
   const stmt = db.prepare('SELECT * FROM sections WHERE title = ?');

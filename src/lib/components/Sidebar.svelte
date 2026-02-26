@@ -42,6 +42,9 @@
     <button class="nav-item section-link" onclick={() => onViewChange('blockers')}>
       Current Blockers
     </button>
+    <button class="nav-item section-link" onclick={() => onViewChange('weeklySummaries')}>
+      Weekly Summaries
+    </button>
   </div>
 
   <div class="sidebar-footer">

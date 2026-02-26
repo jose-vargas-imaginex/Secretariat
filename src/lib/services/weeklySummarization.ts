@@ -24,6 +24,14 @@ interface WeeklySummaryResponse {
   summary: string;
 }
 
+export type SummaryVerbosity = 'concise' | 'moderate' | 'verbose';
+
+const VERBOSITY_INSTRUCTIONS: Record<SummaryVerbosity, string> = {
+  concise: '- Write 1-2 short paragraphs hitting only the key highlights of the week',
+  moderate: '- Write 2-4 paragraphs of free-form prose summarizing the week\'s work',
+  verbose: '- Write 4-6 detailed paragraphs covering all activities and their context thoroughly',
+};
+
 export function getWeekKey(date: Date): string {
   const monday = startOfISOWeek(date);
   return format(monday, 'yyyy-MM-dd');
@@ -59,7 +67,8 @@ export function getWeeklySummary(weekKey: string): { section: Section; entry: En
 function buildWeeklySummaryPrompt(
   blocks: Block[],
   entriesByBlock: Map<number, Entry[]>,
-  existingText: string | null
+  existingText: string | null,
+  verbosity: SummaryVerbosity = 'moderate'
 ): string {
   let notesText = '';
   for (const block of blocks) {
@@ -82,7 +91,7 @@ function buildWeeklySummaryPrompt(
     editContext = `\nThe user previously edited the summary below. Respect and incorporate their edits while updating with new information:\n---\n${existingText}\n---\n`;
   }
 
-  return `You are summarizing a week of work log entries into a concise narrative summary.
+  return `You are summarizing a week of work log entries into a narrative summary.
 
 Return a JSON object with this exact structure:
 {
@@ -90,7 +99,7 @@ Return a JSON object with this exact structure:
 }
 
 Rules:
-- Write 2-4 paragraphs of free-form prose summarizing the week's work
+${VERBOSITY_INSTRUCTIONS[verbosity]}
 - Group related activities together thematically
 - Highlight key accomplishments and progress
 - Note any patterns or themes across the week
@@ -111,7 +120,7 @@ function parseWeeklySummaryResponse(text: string): WeeklySummaryResponse {
   return parsed;
 }
 
-export async function generateWeeklySummary(weekKey: string): Promise<void> {
+export async function generateWeeklySummary(weekKey: string, verbosity: SummaryVerbosity = 'moderate'): Promise<void> {
   const monday = parseISO(weekKey);
   const sunday = endOfISOWeek(monday);
   const startStr = format(monday, 'yyyy-MM-dd');
@@ -139,7 +148,7 @@ export async function generateWeeklySummary(weekKey: string): Promise<void> {
     : null;
 
   // Build prompt and call Gemini
-  const prompt = buildWeeklySummaryPrompt(blocks, entriesByBlock, existingText);
+  const prompt = buildWeeklySummaryPrompt(blocks, entriesByBlock, existingText, verbosity);
   let responseText: string;
   try {
     responseText = await generateContent(prompt);

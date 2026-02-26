@@ -6,6 +6,7 @@
     getWeeklySummaries,
     getWeeklySummary,
     generateWeeklySummary,
+    type SummaryVerbosity,
   } from "../services/weeklySummarization.js";
   import { updateEntry } from "../services/db/entries.js";
   import { GeminiError } from "../services/gemini.js";
@@ -22,6 +23,7 @@
   let loading = $state(false);
   let errorMessage = $state("");
   let errorCode = $state("");
+  let verbosity: SummaryVerbosity = $state('moderate');
 
   let summaries: WeeklySummaryInfo[] = $derived.by(() => {
     refreshCounter;
@@ -87,7 +89,7 @@
     errorMessage = "";
     errorCode = "";
     try {
-      await generateWeeklySummary(selectedWeekKey);
+      await generateWeeklySummary(selectedWeekKey, verbosity);
       refreshCounter++;
     } catch (err) {
       if (err instanceof GeminiError) {
@@ -118,6 +120,15 @@
       <h1>Weekly Summary</h1>
       <p class="last-updated">Last updated: {formattedDate}</p>
     </div>
+    <div class="header-actions">
+      <label class="verbosity-label">
+        Verbosity
+        <select bind:value={verbosity}>
+          <option value="concise">Concise</option>
+          <option value="moderate">Moderate</option>
+          <option value="verbose">Verbose</option>
+        </select>
+      </label>
     <button
       class="refresh-btn"
       onclick={handleGenerate}
@@ -156,6 +167,7 @@
         {hasNeverGenerated ? "Generate" : "Regenerate"}
       {/if}
     </button>
+    </div>
   </header>
 
   <div class="week-selector">
@@ -213,6 +225,31 @@
     align-items: flex-start;
     justify-content: space-between;
     margin-bottom: 1.5rem;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .verbosity-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+
+  .verbosity-label select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    cursor: pointer;
   }
 
   .header-text h1 {

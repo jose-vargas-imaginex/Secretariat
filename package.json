@@ -7,11 +7,28 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "package": "vite build && electron-builder --mac",
     "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "build": {
+    "appId": "com.secretariat.app",
+    "productName": "Secretariat",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    }
+  },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/node": "^25.1.0",

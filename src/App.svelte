@@ -7,7 +7,8 @@
   import { onMount } from "svelte";
   import { initDatabase } from "./lib/services/db/database.js";
   import { getSetting } from "./lib/services/db/settings.js";
-  import { applyTheme } from "./lib/services/theme.js";
+  import { applyTheme, applyPalette, getPaletteById } from "./lib/services/theme.js";
+  import type { ColorPalette } from "./lib/services/theme.js";
 
   let dbReady = $state(false);
   let error = $state<string | null>(null);
@@ -19,6 +20,11 @@
       await initDatabase();
       const theme = getSetting("theme_preference") || "system";
       applyTheme(theme);
+      const activePaletteId = getSetting("active_palette") || "default";
+      const customPalettesJson = getSetting("custom_palettes");
+      const customPalettes: ColorPalette[] = customPalettesJson ? JSON.parse(customPalettesJson) : [];
+      const palette = getPaletteById(activePaletteId, customPalettes);
+      applyPalette(palette);
       dbReady = true;
     } catch (e) {
       error = (e as Error).message;

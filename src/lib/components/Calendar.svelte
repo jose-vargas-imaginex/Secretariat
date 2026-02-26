@@ -15,10 +15,11 @@
   interface Props {
     selectedDate?: Date;
     datesWithNotes?: string[];
+    showSelected?: boolean;
     onDateSelect?: (date: Date) => void;
   }
 
-  let { selectedDate = $bindable(new Date()), datesWithNotes = [], onDateSelect }: Props = $props();
+  let { selectedDate = $bindable(new Date()), datesWithNotes = [], showSelected = true, onDateSelect }: Props = $props();
 
   let viewDate = $state(new Date());
 
@@ -70,7 +71,7 @@
       <button
         class="day"
         class:other-month={!isSameMonth(day, viewDate)}
-        class:selected={isSameDay(day, selectedDate)}
+        class:selected={showSelected && isSameDay(day, selectedDate)}
         class:today={isSameDay(day, new Date())}
         class:has-notes={hasNotes(day)}
         onclick={() => selectDay(day)}

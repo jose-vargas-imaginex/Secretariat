@@ -23,6 +23,7 @@
 <div class="layout">
   <Sidebar
     bind:selectedDate
+    {currentView}
     onViewChange={handleViewChange}
   />
   <main class="main-content">

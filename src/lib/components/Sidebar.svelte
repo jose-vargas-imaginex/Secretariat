@@ -5,10 +5,11 @@
 
   interface Props {
     selectedDate?: Date;
+    currentView?: string;
     onViewChange?: (view: string) => void;
   }
 
-  let { selectedDate = $bindable(new Date()), onViewChange = () => {} }: Props =
+  let { selectedDate = $bindable(new Date()), currentView = 'today', onViewChange = () => {} }: Props =
     $props();
 
   let datesWithNotes = $derived.by(() => {
@@ -29,26 +30,26 @@
   </div>
 
   <nav class="nav">
-    <button class="nav-item" onclick={goToToday}> Today </button>
+    <button class="nav-item" class:active={currentView === 'today' || currentView === 'day'} onclick={goToToday}> Today </button>
   </nav>
 
   <div class="sidebar-section">
     <h2>Calendar</h2>
-    <Calendar bind:selectedDate {datesWithNotes} onDateSelect={() => onViewChange('day')} />
+    <Calendar bind:selectedDate {datesWithNotes} showSelected={currentView === 'today' || currentView === 'day'} onDateSelect={() => onViewChange('day')} />
   </div>
 
   <div class="sidebar-section">
     <h2>Sections</h2>
-    <button class="nav-item section-link" onclick={() => onViewChange('blockers')}>
+    <button class="nav-item section-link" class:active={currentView === 'blockers'} onclick={() => onViewChange('blockers')}>
       Current Blockers
     </button>
-    <button class="nav-item section-link" onclick={() => onViewChange('weeklySummaries')}>
+    <button class="nav-item section-link" class:active={currentView === 'weeklySummaries'} onclick={() => onViewChange('weeklySummaries')}>
       Weekly Summaries
     </button>
   </div>
 
   <div class="sidebar-footer">
-    <button class="nav-item" onclick={() => onViewChange("settings")}
+    <button class="nav-item" class:active={currentView === 'settings'} onclick={() => onViewChange("settings")}
       >Settings</button
     >
   </div>
@@ -97,6 +98,11 @@
 
   .nav-item:hover {
     background: var(--bg-hover);
+  }
+
+  .nav-item.active {
+    background: var(--bg-hover);
+    font-weight: 500;
   }
 
   .sidebar-section {

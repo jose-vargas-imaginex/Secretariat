@@ -25,6 +25,15 @@
       const customPalettes: ColorPalette[] = customPalettesJson ? JSON.parse(customPalettesJson) : [];
       const palette = getPaletteById(activePaletteId, customPalettes);
       applyPalette(palette);
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const currentPaletteId = getSetting("active_palette") || "default";
+        if (currentPaletteId !== "default") {
+          const cpJson = getSetting("custom_palettes");
+          const cp: ColorPalette[] = cpJson ? JSON.parse(cpJson) : [];
+          const p = getPaletteById(currentPaletteId, cp);
+          applyPalette(p);
+        }
+      });
       dbReady = true;
     } catch (e) {
       error = (e as Error).message;

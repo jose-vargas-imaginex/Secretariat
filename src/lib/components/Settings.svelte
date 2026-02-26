@@ -51,6 +51,9 @@
     themePreference = value;
     setSetting("theme_preference", value);
     applyTheme(value);
+    // Re-apply palette so it adapts to the new light/dark mode
+    const palette = getPaletteById(activePaletteId, customPalettes);
+    applyPalette(palette);
   }
 
   function handlePaletteSelect(id: string) {

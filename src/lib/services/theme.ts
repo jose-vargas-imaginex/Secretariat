@@ -36,6 +36,20 @@ function mixColors(hex1: string, hex2: string, weight: number): string {
   );
 }
 
+function isDarkMode(): boolean {
+  const root = document.documentElement;
+  const explicit = root.getAttribute('data-theme');
+  if (explicit === 'dark') return true;
+  if (explicit === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function invertForDarkMode(bgPrimary: string, textPrimary: string): { bg: string; text: string } {
+  const bg = mixColors(bgPrimary, '#1a1a2e', 0.85);
+  const text = mixColors(textPrimary, '#f8f8f2', 0.85);
+  return { bg, text };
+}
+
 export function applyPalette(palette: ColorPalette | null): void {
   const root = document.documentElement;
 
@@ -52,14 +66,17 @@ export function applyPalette(palette: ColorPalette | null): void {
     return;
   }
 
-  const { accent, bgPrimary, textPrimary } = palette;
+  let { accent, bgPrimary, textPrimary } = palette;
 
-  // Set key colors
+  if (isDarkMode()) {
+    const inverted = invertForDarkMode(bgPrimary, textPrimary);
+    bgPrimary = inverted.bg;
+    textPrimary = inverted.text;
+  }
+
   root.style.setProperty('--accent-color', accent);
   root.style.setProperty('--bg-primary', bgPrimary);
   root.style.setProperty('--text-primary', textPrimary);
-
-  // Derive secondary colors
   root.style.setProperty('--bg-secondary', mixColors(bgPrimary, textPrimary, 0.03));
   root.style.setProperty('--bg-hover', mixColors(bgPrimary, textPrimary, 0.06));
   root.style.setProperty('--bg-active', mixColors(bgPrimary, accent, 0.08));
